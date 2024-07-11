@@ -17,6 +17,7 @@ import {
   SorobanRpc,
   Transaction,
   TransactionBuilder,
+  Keypair,
   xdr,
 } from "@stellar/stellar-sdk";
 
@@ -131,7 +132,47 @@ export async function invokeOperation<T>(
   ).build();
   console.log(assemble_tx);
 
-  return assemble_tx.toXDR();
+  assemble_tx.sign(Keypair.fromSecret(process.env.SECRET_KEY));
+  const signed_xdr_string = assemble_tx.toXDR();
+  const signed_tx = new Transaction(signed_xdr_string, network.passphrase);
+  const tx_hash = signed_tx.hash().toString("hex");
+  const resources = Resources.fromTransaction(assemble_tx.toEnvelope());
+
+  // submit the TX
+  let response: SorobanResponse = await rpc.sendTransaction(signed_tx);
+  let status: string = response.status;
+  // Poll this until the status is not "NOT_FOUND"
+  const pollingStartTime = Date.now();
+  while (status === "PENDING" || status === "NOT_FOUND") {
+    if (pollingStartTime + txOptions.timeout < Date.now()) {
+      /*
+      return new ContractError(
+        ContractErrorType.UnknownError,
+        `Transaction timed out with status ${status}`
+      );
+      */
+      return 'timeout';
+    }
+    await new Promise((resolve) =>
+      setTimeout(resolve, txOptions.pollingInterval)
+    );
+    // See if the transaction is complete
+    response = await rpc.getTransaction(tx_hash);
+    status = response.status;
+  }
+
+  /*
+  const result = ContractResult.fromTransactionResponse(
+    response as SorobanRpc.Api.GetTransactionResponse,
+    tx_hash,
+    resources,
+    parse
+  );
+
+  return result;
+  */
+
+  return 'done';
 }
 
 async function vote(
