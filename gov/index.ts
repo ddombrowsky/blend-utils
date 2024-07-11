@@ -60,12 +60,11 @@ export type SorobanResponse =
  */
 export async function invokeOperation<T>(
   source: string,
-  sign: (txXdr: string) => Promise<string>,
   network: Network,
   txOptions: TxOptions,
   parse: any,
   operation: xdr.Operation | string
-): Promise<ContractResult<any> | ContractError> {
+): Promise<string> {
   // create TX
   const rpc = new SorobanRpc.Server(network.rpc, network.opts);
   let source_account: Account;
@@ -75,6 +74,8 @@ export async function invokeOperation<T>(
   } else {
     source_account = await rpc.getAccount(source);
   }
+  console.log(source);
+  console.log(source_account);
   const tx_builder = new TransactionBuilder(
     source_account,
     txOptions.builderOptions
@@ -88,16 +89,22 @@ export async function invokeOperation<T>(
 
   // simulate the TX
   const simulation_resp = await rpc.simulateTransaction(tx);
+  console.log(simulation_resp);
   if (SorobanRpc.Api.isSimulationError(simulation_resp)) {
     // No resource estimation available from a simulation error. Allow the response formatter
     // to fetch the error.
     const empty_resources = new Resources(0, 0, 0, 0, 0, 0, 0);
+    /*
     return ContractResult.fromSimulationResponse(
       simulation_resp,
       tx.hash().toString("hex"),
       empty_resources,
       parse
     );
+    */
+    console.log(tx.hash().toString("hex"));
+    // see soroban-governor/contracts/governor/src/errors.rs
+    return 'simulation error';
   } else if (txOptions.sim) {
     // Only simulate the TX. Assemble the TX to borrow the resource estimation algorithm in
     // `assembleTransaction` and return the simulation results.
@@ -106,57 +113,30 @@ export async function invokeOperation<T>(
       simulation_resp
     ).build();
     const resources = Resources.fromTransaction(prepped_tx.toXDR());
+    /*
     return ContractResult.fromSimulationResponse(
       simulation_resp,
       prepped_tx.hash().toString("hex"),
       resources,
       parse
     );
+    */
+    return '';
   }
 
-  // assemble and sign the TX
+  // assemble the TX
   const assemble_tx = SorobanRpc.assembleTransaction(
     tx,
     simulation_resp
   ).build();
-  const signed_xdr_string = await sign(assemble_tx.toXDR());
-  const signed_tx = new Transaction(signed_xdr_string, network.passphrase);
-  const tx_hash = signed_tx.hash().toString("hex");
-  const resources = Resources.fromTransaction(assemble_tx.toEnvelope());
+  console.log(assemble_tx);
 
-  // submit the TX
-  let response: SorobanResponse = await rpc.sendTransaction(signed_tx);
-  let status: string = response.status;
-  // Poll this until the status is not "NOT_FOUND"
-  const pollingStartTime = Date.now();
-  while (status === "PENDING" || status === "NOT_FOUND") {
-    if (pollingStartTime + txOptions.timeout < Date.now()) {
-      return new ContractError(
-        ContractErrorType.UnknownError,
-        `Transaction timed out with status ${status}`
-      );
-    }
-    await new Promise((resolve) =>
-      setTimeout(resolve, txOptions.pollingInterval)
-    );
-    // See if the transaction is complete
-    response = await rpc.getTransaction(tx_hash);
-    status = response.status;
-  }
-
-  const result = ContractResult.fromTransactionResponse(
-    response as SorobanRpc.Api.GetTransactionResponse,
-    tx_hash,
-    resources,
-    parse
-  );
-
-  return result;
+  return assemble_tx.toXDR();
 }
 
 async function vote(
   proposalId: number,
-  support: number,
+  support: number, // The vote support type (0=against, 1=for, 2=abstain)
   sim: boolean,
   governorAddress: string,
   walletAddress: string
@@ -181,14 +161,18 @@ async function vote(
       proposal_id: proposalId,
       support,
     });
-    /*const submission = invokeOperation<xdr.ScVal>(
+
+    const submission = invokeOperation<xdr.ScVal>(
       walletAddress,
-      sign,
       network,
       txOptions,
       GovernorContract.parsers.vote,
       voteOperation
     );
+    const sub = await submission;
+    console.log(sub);
+
+    /*
     if (sim) {
       const sub = await submission;
       if (sub instanceof ContractResult) {
@@ -208,3 +192,5 @@ async function vote(
     throw e;
   }
 }
+
+vote(2, 1, false,'CANSYFVMIP7JVYEZQ463Y2I2VLEVNLDJJ4QNZTDBGLOOGKURPTW4A6FQ', 'GDJSH2NU2WF6J4P5DL4522DUCABWSTZOKFQ7BHBCFYQ3QKC6FRYWP6OL');
