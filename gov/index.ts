@@ -160,6 +160,8 @@ export async function invokeOperation<T>(
     response = await rpc.getTransaction(tx_hash);
     status = response.status;
   }
+  console.log(status);
+  console.log(tx_hash);
 
   /*
   const result = ContractResult.fromTransactionResponse(
