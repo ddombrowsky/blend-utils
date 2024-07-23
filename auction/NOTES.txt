@@ -1,0 +1,8 @@
+
+https://stellar.expert/explorer/public/tx/cc0c5ac90144b55ae612a19c0027bc8387117e5f2fb23508c9a7b035f4a632b0
+
+key is `request_type: 8`.
+
+Creation is `new_interest_auction`
+
+https://stellar.expert/explorer/public/tx/a9b878274afd4cca2592fe813f4169f14b8d27d4d0816e6ccde8f949e5334248

@@ -1,0 +1,17 @@
+
+Here is an example of voting via the soroban CLI:
+
+for support param, 0 = against, 1 = for, 2 = abstain
+
+```
+soroban contract invoke \
+  --id CANSYFVMIP7JVYEZQ463Y2I2VLEVNLDJJ4QNZTDBGLOOGKURPTW4A6FQ \
+  --rpc-url https://soroban-rpc.creit.tech \
+  --network-passphrase 'Public Global Stellar Network ; September 2015' \ 
+  --source-account S... \ 
+  --fee 10000 \
+  -- vote \
+  --voter G... \
+  --proposal_id 2 \
+  --support 1
+```
