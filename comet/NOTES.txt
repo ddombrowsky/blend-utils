@@ -1,0 +1,23 @@
+
+soroban keys add xbull --secret-key
+
+soroban network add public \
+    --rpc-url https://soroban-rpc.creit.tech \
+    --network-passphrase 'Public Global Stellar Network ; September 2015'
+
+comet swaps:
+
+soroban contract invoke \
+    --id CAS3FL6TLZKDGGSISDBWGGPXT3NRR4DYTZD7YOD3HMYO6LTJUVGRVEAM \
+    --source-account xbull \
+    --network public \
+    --fee 10000000 \
+    -- swap_exact_amount_in \
+    --token_in "CCW67TSZV3SSS2HXMBQ5JFGCKJNXKZM7UQUWUZPUTHXSTZLEO7SJMI75" \
+    --token_amount_in 50000000 \
+    --token_out "CD25MNVTZDL4Y3XBCPCJXGXATV5WUHHOWMYFF4YBEGU5FCPGMYTVG5JY" \
+    --min_amount_out 1 \
+    --max_price 100000000000 \
+    --user xbull
+
+this swaps 5 USDC to BLND
