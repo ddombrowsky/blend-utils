@@ -7,7 +7,7 @@ const network: Network = {
 
 const poolContracts = [
   'CDVQVKOY2YSXS2IC7KN6MNASSHPAO7UN2UR2ON4OI2SKMFJNVAMDX6DP',
-//  'CBP7NO6F7FRDHSOFQBT2L2UWYIZ2PU76JKVRYAQTG3KZSQLYAOKIF2WB'
+  'CBP7NO6F7FRDHSOFQBT2L2UWYIZ2PU76JKVRYAQTG3KZSQLYAOKIF2WB'
 ];
 const backstopContract = 'CAO3AGAMZVRMHITL36EJ2VZQWKYRPWMQAPDQD5YEOF3GIF7T44U4JAL3';
 
@@ -40,9 +40,11 @@ async function display(userPub: string, poolId: string) {
   //console.log(JSON.stringify(user, replacer, 2));
   console.log(`Balances for ${user.user} ->`);
 
+  console.log('Liabilities ->');
   for (let x of user.positionEstimates.liabilities) {
     console.log(x);
   }
+  console.log('Collateral ->');
   for (let x of user.positionEstimates.collateral) {
     console.log(x);
   }
