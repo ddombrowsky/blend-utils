@@ -51,7 +51,7 @@ while [ $good = 1 ] ; do
 
     echo "sdex swap $tokv USDC -> $BLND_N BLND"
     node sdex/index.js $tokv $BLND_N inverse | tee out2
-    if [ $? = 0 ] ; then
+    if [ $PIPESTATUS = 0 ] ; then
         srcv=`cat out2`
     else
         srcv=0
