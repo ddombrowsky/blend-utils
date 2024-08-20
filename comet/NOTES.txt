@@ -21,3 +21,22 @@ soroban contract invoke \
     --user xbull
 
 this swaps 5 USDC to BLND
+
+## Swap Scripts
+
+usage:
+
+```
+./swap-usdc.sh 5 0.069
+```
+
+Attempts to swap 5 USDC to BLND for less than 0.069 USDC per BLND, and then
+swaps it back on the SDEX attempting to make a profit.
+
+
+```
+./swap-blnd.sh 200 16.1
+```
+
+Attempts to swap 200 BLND to USDC for less than 16.1 BLND per USDC, and then
+swaps it back on the SDEX attempting to make a profit.

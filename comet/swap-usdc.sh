@@ -20,6 +20,7 @@ echo USDC=$USDC
 echo PRICE=$PRICESTR
 
 good=1
+export SECRET_KEY=`stellar keys show xbull`
 
 while [ $good = 1 ] ; do 
     soroban contract invoke \
@@ -47,7 +48,12 @@ while [ $good = 1 ] ; do
 
     echo "sdex swap $tokv BLND -> $USDC_N USDC"
     node sdex/index.js $tokv $USDC_N | tee out2
-    srcv=`cat out2`
+    if [ $? = 0 ] ; then
+        srcv=`cat out2`
+    else
+        srcv=0
+    fi
+
     echo "$USDC_N < $srcv ?"
     if perl -e "$USDC_N<$srcv"'&&exit(0)||exit(1)' ; then
         echo yes, continuing
