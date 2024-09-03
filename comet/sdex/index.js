@@ -111,6 +111,7 @@ async function go() {
     } else {
       console.log(e);
     }
+    process.exit(1);
   }
 
 }
