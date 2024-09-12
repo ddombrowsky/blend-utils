@@ -1,31 +1,28 @@
 #!/bin/bash
-
 set -e
 
-# swap BLND -> USDC
-
-# NOTE: error #22 = bad limit price
-
-# PRICE is in BLND.
-# To get 0.078 per BLND, do 1/0.078=12.82
-if [ -z "$2" ] ; then
-    PRICE=13.70
-else
-    PRICE=$2
-fi
-
+# swap BLND -> USDC in pool
 BLND_N=$1
+# price is in BLND.
+# To get 0.078 per BLND, do 1/0.078=12.82, = bottom sell price in orderbook
+PRICE=$2
+
+# in BLND
+FEEMARGIN=0.04
 
 BLND=`echo $BLND_N*10000000|bc|sed -e 's/\..*//'`
 PRICESTR=`echo $PRICE*10000000|bc|sed -e 's/\..*//'`
 
 echo BLND=$BLND
 echo PRICE=$PRICESTR
+echo FEEMARGIN=$FEEMARGIN
 
 good=1
 export SECRET_KEY=`stellar keys show xbull`
 
+TOKSTR=BLND
 while [ $good = 1 ] ; do 
+    # NOTE: error #22 = bad limit price
     soroban contract invoke \
     --id CAS3FL6TLZKDGGSISDBWGGPXT3NRR4DYTZD7YOD3HMYO6LTJUVGRVEAM \
     --source-account xbull \
@@ -44,26 +41,27 @@ while [ $good = 1 ] ; do
     perl -e '
         $tok = int('$tok');
         print("sell usdc > ".('$BLND_N'/($tok/10000000))."\n");
-        print("buy  blnd < ".(($tok/10000000)/'$BLND_N')."\n");
+        print("buy '$TOKSTR' < ".(($tok/10000000)/('$BLND_N'+'$FEEMARGIN'))."\n");
     '
 
     tokv=`perl -e '$tok = int('$tok');print(($tok/10000000));'`
 
-    echo "sdex swap $tokv USDC -> $BLND_N BLND"
-    node sdex/index.js $tokv $BLND_N inverse | tee out2
+    echo "sdex swap $tokv USDC -> $BLND_N $TOKSTR"
+    sleep 3
+    node sdex/index.js $tokv `echo $BLND_N+$FEEMARGIN|bc` inverse | tee out2
     if [ $PIPESTATUS = 0 ] ; then
         srcv=`cat out2`
     else
         srcv=0
     fi
 
-    echo "$BLND_N < $srcv ?"
-    if perl -e "$BLND_N<$srcv"'&&exit(0)||exit(1)' ; then
+    echo "$BLND_N+$FEEMARGIN < $srcv ?"
+    if perl -e "($BLND_N+$FEEMARGIN)<$srcv"'&&exit(0)||exit(1)' ; then
         echo yes, continuing
     else
         echo no, stopping
         good=0
     fi
 
-    sleep 1
+    sleep 2
 done
