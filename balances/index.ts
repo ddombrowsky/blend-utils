@@ -1,4 +1,4 @@
-import { Backstop, BackstopUser, Pool, Network } from '@blend-capital/blend-sdk';
+import { Backstop, BackstopPoolUser, Pool, Network } from '@blend-capital/blend-sdk';
 
 const network: Network = {
   rpc: "https://soroban-rpc.creit.tech/",
@@ -27,26 +27,29 @@ const replacer = (key: any, value: any) => {
   }
 };
 
+function pb(x: BigInt): number {
+    return parseInt(x.toString()) / 10**7;
+}
+
 async function display(userPub: string, poolId: string) {
   const pool = await Pool.load(
     network,
-    poolId,
-    Math.floor(Date.now() / 1000));
+    poolId);
+  //const oracle = await pool.loadOracle();
 
-  const user = await pool.loadUser(
-    network,
-    userPub);
+  const user = await pool.loadUser(userPub);
 
   //console.log(JSON.stringify(user, replacer, 2));
-  console.log(`Balances for ${user.user} ->`);
+  console.log(`Balances for ${user.userId} ->`);
 
   console.log('Liabilities ->');
-  for (let x of user.positionEstimates.liabilities) {
-    console.log(x);
+  // TODO doesn't work, needs to use estimates
+  for (let x of user.positions.liabilities) {
+    console.log(`${x[0]} : ${pb(x[1])}`);
   }
   console.log('Collateral ->');
-  for (let x of user.positionEstimates.collateral) {
-    console.log(x);
+  for (let x of user.positions.collateral) {
+    console.log(`${x[0]} : ${pb(x[1])}`);
   }
 
 }
@@ -54,25 +57,28 @@ async function display(userPub: string, poolId: string) {
 let backstop: Backstop;
 
 async function main(pubkeys: Array<string>) {
-  backstop = await Backstop.load(
+  /*backstop = await Backstop.load(
     network,
     backstopContract,
     poolContracts,
     true,
-    Math.floor(Date.now() / 1000));
+    Math.floor(Date.now() / 1000));*/
 
   for (let pubkey of pubkeys) {
     console.log(`\n== USER ${pubkey} ==`);
-    const userBackstop = await BackstopUser.load(
-      network,
-      pubkey,
-      backstop);
 
     for (let poolId of poolContracts) {
+      const userBackstop = await BackstopPoolUser.load(
+        network,
+        backstopContract,
+        poolId,
+        pubkey);
+
       console.log(`POOL ${poolId}`);
       await display(pubkey, poolId);
       console.log('backstop:');
-      console.log(userBackstop.estimates.get(poolId).tokens);
+      //console.log(userBackstop.estimates.get(poolId).tokens);
+      console.log(userBackstop);
     }
   }
 
