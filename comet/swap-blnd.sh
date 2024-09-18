@@ -46,7 +46,7 @@ while [ $good = 1 ] ; do
 
     tokv=`perl -e '$tok = int('$tok');print(($tok/10000000));'`
 
-    echo "sdex swap $tokv USDC -> $BLND_N $TOKSTR"
+    echo "sdex swap $tokv USDC -> $BLND_N+$FEEMARGIN $TOKSTR"
     sleep 3
     node sdex/index.js $tokv `echo $BLND_N+$FEEMARGIN|bc` inverse | tee out2
     if [ $PIPESTATUS = 0 ] ; then
