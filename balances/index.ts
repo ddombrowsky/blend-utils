@@ -1,4 +1,12 @@
-import { Backstop, BackstopPoolUser, Pool, Network } from '@blend-capital/blend-sdk';
+import {
+  Backstop,
+  BackstopPool,
+  BackstopPoolUser,
+  BackstopPoolUserEst,
+  Pool,
+  Network,
+  PositionsEstimate
+} from '@blend-capital/blend-sdk';
 
 const network: Network = {
   rpc: "https://soroban-rpc.creit.tech/",
@@ -35,21 +43,31 @@ async function display(userPub: string, poolId: string) {
   const pool = await Pool.load(
     network,
     poolId);
-  //const oracle = await pool.loadOracle();
-
-  const user = await pool.loadUser(userPub);
+  const pool_oracle = await pool.loadOracle();
+  const pool_user = await pool.loadUser(userPub);
+  const user_est = PositionsEstimate.build(
+    pool, pool_oracle, pool_user.positions
+  );
 
   //console.log(JSON.stringify(user, replacer, 2));
-  console.log(`Balances for ${user.userId} ->`);
+  console.log(`Balances for ${pool_user.userId} ->`);
 
-  console.log('Liabilities ->');
-  // TODO doesn't work, needs to use estimates
-  for (let x of user.positions.liabilities) {
-    console.log(`${x[0]} : ${pb(x[1])}`);
+  console.log('  Liabilities ->');
+  for (let reserve of pool.reserves.values()) {
+    let sym = reserve.tokenMetadata.symbol;
+    let val = pool_user.getLiabilitiesFloat(reserve);
+    if (val > 0) {
+      console.log(`\t${sym}:\t-${val}`);
+    }
   }
-  console.log('Collateral ->');
-  for (let x of user.positions.collateral) {
-    console.log(`${x[0]} : ${pb(x[1])}`);
+
+  console.log('  Collateral ->');
+  for (let reserve of pool.reserves.values()) {
+    let sym = reserve.tokenMetadata.symbol;
+    let val = pool_user.getCollateralFloat(reserve);
+    if (val > 0) {
+      console.log(`\t${sym}:\t${val}`);
+    }
   }
 
 }
@@ -57,28 +75,28 @@ async function display(userPub: string, poolId: string) {
 let backstop: Backstop;
 
 async function main(pubkeys: Array<string>) {
-  /*backstop = await Backstop.load(
-    network,
-    backstopContract,
-    poolContracts,
-    true,
-    Math.floor(Date.now() / 1000));*/
+  const backstop = await Backstop.load(network, backstopContract);
 
   for (let pubkey of pubkeys) {
     console.log(`\n== USER ${pubkey} ==`);
 
     for (let poolId of poolContracts) {
+      const backstop_pool = await BackstopPool.load(
+        network, backstopContract, poolId
+      );
       const userBackstop = await BackstopPoolUser.load(
         network,
         backstopContract,
         poolId,
         pubkey);
+      const backstop_pool_user_est = BackstopPoolUserEst.build(
+        backstop, backstop_pool, userBackstop
+      );
 
       console.log(`POOL ${poolId}`);
       await display(pubkey, poolId);
       console.log('backstop:');
-      //console.log(userBackstop.estimates.get(poolId).tokens);
-      console.log(userBackstop);
+      console.log(backstop_pool_user_est.tokens);
     }
   }
 
