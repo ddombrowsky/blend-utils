@@ -9,7 +9,7 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "@blend-capital/blend-sdk": "^1.1.1",
+    "@blend-capital/blend-sdk": "^2.0.3",
     "@types/node": "^20.14.2",
     "typescript": "^5.4.5"
   }
