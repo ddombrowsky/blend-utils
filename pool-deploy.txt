@@ -1,0 +1,47 @@
+
+
+https://app.sorobanhub.com
+
+https://raw.githubusercontent.com/Creit-Tech/SorobanHub-app/refs/heads/main/templates/project-views/blend/launch-pool.json
+
+https://docs.blend.capital/pool-creators/tutorial-setting-up-a-pool
+
+steps:
+
+1. Deploy new pool
+   * function: deploy()
+   * note that salt is a 64 character hex string
+   * take rate is scaled to 7 decimals, so 20% = 2000000
+
+   example:
+    GDJS...P6OL invoked contract ￼CBNG...EZDK deploy(￼GDJS...P6OL, "Sveiks"str, msepzeI6wq2hEQXuqkLkPC6oMyygqo9B9Y1xYCdNcY4=bytes, ￼CAVL...6HLP, 20u32, 4u32) -> ￼CCEY...GGL7 
+
+1a. Deposit backstop tokens
+   * function: deposit()
+   * this might not be required, but can help the UI to not error out in some cases
+   * contract address is the backstop contract
+        CDJQJS3TLZ6LEWSBOZ2E6QEZZ4NS3JU5LDT2BT7A4UHWAXPLSNE6MM37 (testnet)
+
+
+2. Queue Set Reserve (for each asset)
+   * contract ID needs to be set to the output of deployment (CCEY... in the example)
+   * function queue_set_reserve()
+   * asset ->
+         CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC (XLM testnet soroban), OR ->
+         CAP5AMC2OHNVREO66DFIN6DHJMPOBAJ2KCDDIMFBR7WWJH5RZBFM3UEI (token contract)
+   * metadata ->
+        index: 0
+        decimals: 7
+        c_factor:  8000000  = 0.80
+        l_factor:  8000000  = 0.80
+        util:      6000000  = 0.60  # util must be < max_util
+        max_util:  7000000  = 0.70
+        r_base:     100000  = 0.01
+        r_one:      500000  = 0.05
+        r_two:      500000  = 0.05
+        r_three:  50000000  = 5.00
+        react:          20  = 0.000002
+
+
+
+
