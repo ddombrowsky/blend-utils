@@ -11,6 +11,7 @@ steps:
 1. Deploy new pool
    * function: deploy()
    * note that salt is a 64 character hex string
+        xxd -l32 -c 32 -ps /dev/random
    * take rate is scaled to 7 decimals, so 20% = 2000000
 
    example:
@@ -26,9 +27,11 @@ steps:
 2. Queue Set Reserve (for each asset)
    * contract ID needs to be set to the output of deployment (CCEY... in the example)
    * function queue_set_reserve()
-   * asset ->
-         CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC (XLM testnet soroban), OR ->
-         CAP5AMC2OHNVREO66DFIN6DHJMPOBAJ2KCDDIMFBR7WWJH5RZBFM3UEI (token contract)
+   * assets ->
+         CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC (XLM testnet)
+         CAP5AMC2OHNVREO66DFIN6DHJMPOBAJ2KCDDIMFBR7WWJH5RZBFM3UEI (wBTC testnet)
+         CAZAQB3D7KSLSNOSQKYD2V4JP5V2Y3B4RDJZRLBFCCIXDCTE3WHSY3UE (wETH testnet)
+         CAQCFVLOBK5GIULPNZRGATJJMIZL5BSP7X5YJVMGCPTUEPFM4AVSRCJU (USDC testnet)
    * metadata ->
         index: 0
         decimals: 7
@@ -41,6 +44,40 @@ steps:
         r_two:      500000  = 0.05
         r_three:  50000000  = 5.00
         react:          20  = 0.000002
+
+3. Call set reserve (for each asset)
+   * function set_reserve()
+   * asset list is the same as in step 2
+   * make note of the index returned from each call, as this is the res_index
+   * NOTE: you can call set_reserve() after each queue_set_reserve() call 
+     if you want.
+
+4. Set pool emissions
+   * function set_emissions_config()
+   * vector -> [ 
+        res_index: 0
+        res_type: 0
+        share: 1000000 = 10%
+    ] etc...
+
+5. Activate
+   * function: set_status()
+   * 0 = active, 2 = on ice, 4 = frozen
+   * status should be set to "on ice" first to allow deposits, then
+     updated to "active" once the threshold is met.
+   * IMPORTANT NOTE: that there is a hard-coded backstop threshold of
+     200k product constant.  The exact amount of shares varies depending
+     on value, but is roughly:
+        x = blend amount for 1 LP share
+        y = usdc amount for 1 LP share
+        k = x^0.8 * y^0.8
+
+     At present 1 share equals 4.9158 BLND and 0.0555 USDC, so 1 share = 
+        4.9158^0.8 * 0.0555^0.2 = 2.005090414527
+
+     To meet the 200k threshold, you'd need about 99.8k LP shares in
+     the backstop.
+     
 
 
 
