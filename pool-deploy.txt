@@ -9,6 +9,7 @@ https://docs.blend.capital/pool-creators/tutorial-setting-up-a-pool
 steps:
 
 1. Deploy new pool
+   * contract address: pool factory contract id
    * function: deploy()
    * note that salt is a 64 character hex string
         xxd -l32 -c 32 -ps /dev/random
@@ -18,14 +19,16 @@ steps:
     GDJS...P6OL invoked contract ￼CBNG...EZDK deploy(￼GDJS...P6OL, "Sveiks"str, msepzeI6wq2hEQXuqkLkPC6oMyygqo9B9Y1xYCdNcY4=bytes, ￼CAVL...6HLP, 20u32, 4u32) -> ￼CCEY...GGL7 
 
 1a. Deposit backstop tokens
+   * contract address: backstop contract id
    * function: deposit()
    * this might not be required, but can help the UI to not error out in some cases
-   * contract address is the backstop contract
+   * contract address is the backstop contract, NOT the comet LP contract
         CDJQJS3TLZ6LEWSBOZ2E6QEZZ4NS3JU5LDT2BT7A4UHWAXPLSNE6MM37 (testnet)
+        CAO3AGAMZVRMHITL36EJ2VZQWKYRPWMQAPDQD5YEOF3GIF7T44U4JAL3 (public)
 
 
 2. Queue Set Reserve (for each asset)
-   * contract ID needs to be set to the output of deployment (CCEY... in the example)
+   * contract address: pool id, which is output of deployment (CCEY... in the example)
    * function queue_set_reserve()
    * assets ->
          CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC (XLM testnet)
@@ -46,6 +49,7 @@ steps:
         react:          20  = 0.000002
 
 3. Call set reserve (for each asset)
+   * contract address: pool id
    * function set_reserve()
    * asset list is the same as in step 2
    * make note of the index returned from each call, as this is the res_index
@@ -53,10 +57,11 @@ steps:
      if you want.
 
 4. Set pool emissions
+   * contract address: pool id
    * function set_emissions_config()
    * vector -> [ 
         res_index: 0
-        res_type: 0
+        res_type: 0 # 0 for liabilities, 1 for supply
         share: 1000000 = 10%
     ] etc...
 
@@ -65,18 +70,18 @@ steps:
    * 0 = active, 2 = on ice, 4 = frozen
    * status should be set to "on ice" first to allow deposits, then
      updated to "active" once the threshold is met.
-   * IMPORTANT NOTE: that there is a hard-coded backstop threshold of
+   * IMPORTANT NOTE: there is a hard-coded backstop threshold of
      200k product constant.  The exact amount of shares varies depending
-     on value, but is roughly:
+     on value, and is defined by this formula:
         x = blend amount for 1 LP share
         y = usdc amount for 1 LP share
         k = x^0.8 * y^0.8
 
      At present 1 share equals 4.9158 BLND and 0.0555 USDC, so 1 share = 
-        4.9158^0.8 * 0.0555^0.2 = 2.005090414527
+        4.9158^0.8 * 0.0555^0.2 = 2.005090414527 PC
 
-     To meet the 200k threshold, you'd need about 99.8k LP shares in
-     the backstop.
+     To meet the 200k PC threshold, you'd need about 99.8k LP shares
+     in the backstop.
      
 
 

@@ -1,0 +1,89 @@
+
+== pool creation ==
+
+factory used -> CCZD...TGAG
+
+admin: GDJSH2NU2WF6J4P5DL4522DUCABWSTZOKFQ7BHBCFYQ3QKC6FRYWP6OL
+name: Lightning
+salt: <generated>
+oracle: CALI2BYU2JE6WVRUFYTS6MSBNEHGJ35P4AVCZYF3B6QOE3QKOB2PLE6M
+backstop_take_rate: 1500000
+max_positions: 4
+
+Lightning contract ID: CCTZXMW3DJIKDI3UVDUJR6PM4WFFEB5RIWDXJBGIEFBD5XFHI26LZ5BU
+
+This will have XLM, USDC, BTCLN, and XRP as tracked by
+reflector.network.
+
+== assets ==
+CAS3J7GYLGXMF6TDJBBYYSE3HQ6BBSMLNUQ34T6TZMYMW2EVH34XOWMA XLM  | res_index:0
+CCW67TSZV3SSS2HXMBQ5JFGCKJNXKZM7UQUWUZPUTHXSTZLEO7SJMI75 USDC | res_index:1
+CBHIQPUXLFLC5O44ZJVUTCL5LMZFLVGU5DEIGSYKBSAPFMOGTKOQEPFM BTCLN| res_index:2
+CAAV3AE3VKD2P4TY7LWTQMMJHIJ4WOCZ5ANCIJPC3NRSERKVXNHBU2W7 XRP  | res_index:3
+
+asset: CAS3J7GYLGXMF6TDJBBYYSE3HQ6BBSMLNUQ34T6TZMYMW2EVH34XOWMA # XLM
+    index: 0
+    decimals: 7
+    c_factor:  7500000  = 0.75
+    l_factor:  7500000  = 0.75
+    util:      6000000  = 0.60
+    max_util:  7000000  = 0.70
+    r_base:     100000  = 0.01
+    r_one:      500000  = 0.05
+    r_two:     5000000  = 0.50
+    r_three:  50000000  = 5.00
+    react:          20  = 0.000002
+
+asset: CCW67TSZV3SSS2HXMBQ5JFGCKJNXKZM7UQUWUZPUTHXSTZLEO7SJMI75 # USDC
+    index: 0
+    decimals: 7
+    c_factor:  9500000  = 0.95
+    l_factor:  9500000  = 0.95
+    util:      7000000  = 0.70
+    max_util:  9500000  = 0.95
+    r_base:     300000  = 0.03
+    r_one:      600000  = 0.06
+    r_two:     1200000  = 0.12
+    r_three:  50000000  = 5.00
+    react:          20  = 0.000002
+
+asset: CBHIQPUXLFLC5O44ZJVUTCL5LMZFLVGU5DEIGSYKBSAPFMOGTKOQEPFM # BTCLN
+    index: 0
+    decimals: 7
+    c_factor:  7000000  = 0.70
+    l_factor:  5000000  = 0.50
+    util:      6000000  = 0.60
+    max_util:  7000000  = 0.70
+    r_base:     100000  = 0.01
+    r_one:      500000  = 0.05
+    r_two:     5000000  = 0.50
+    r_three:  50000000  = 5.00
+    react:          20  = 0.000002
+
+asset: CAAV3AE3VKD2P4TY7LWTQMMJHIJ4WOCZ5ANCIJPC3NRSERKVXNHBU2W7 # XRP
+    index: 0
+    decimals: 7
+    c_factor:  2000000  = 0.20
+    l_factor:  5000000  = 0.50
+    util:      6000000  = 0.60
+    max_util:  7000000  = 0.70
+    r_base:     100000  = 0.01
+    r_one:      500000  = 0.05
+    r_two:     5000000  = 0.50
+    r_three:  50000000  = 5.00
+    react:          20  = 0.000002
+
+== emissions ==
+
+[
+    {res_index: 0, res_type: 0, share = 1750000 } #   xlm, lia, 17.5%
+    {res_index: 0, res_type: 1, share =  750000 } #   xlm, col,  7.5%
+    {res_index: 1, res_type: 0, share = 1750000 } #  usdc, lia, 17.5%
+    {res_index: 1, res_type: 1, share =  750000 } #  usdc, col,  7.5%
+    {res_index: 2, res_type: 0, share = 1750000 } # btcln, lia, 17.5%
+    {res_index: 2, res_type: 1, share =  750000 } # btcln, col,  7.5%
+    {res_index: 3, res_type: 0, share = 1750000 } #   xrp, lia, 17.5%
+    {res_index: 3, res_type: 1, share =  750000 } #   xrp, col,  7.5%
+]
+                          total share: 10000000
+
