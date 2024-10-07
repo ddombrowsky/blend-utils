@@ -87,3 +87,13 @@ asset: CAAV3AE3VKD2P4TY7LWTQMMJHIJ4WOCZ5ANCIJPC3NRSERKVXNHBU2W7 # XRP
 ]
                           total share: 10000000
 
+== set admin ==
+Set pool status state (set_status()) to 2 "on ice."  This allows deposits.
+
+Then transfer ownership to the DAO (set_admin()).  This requires signatures
+on both ends and is a bit of an undefined process involving an intermediate
+multisignature account.
+
+Then bootstrap using the bootstrapper.  Finally, call set_status()
+with no params (this is a call from the DAO), to begin permissionless
+operation.
