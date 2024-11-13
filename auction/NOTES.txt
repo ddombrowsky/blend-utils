@@ -10,3 +10,11 @@ https://stellar.expert/explorer/public/tx/a9b878274afd4cca2592fe813f4169f14b8d27
 
 Listen for events on the pool contract to know when it's starting.
 https://github.com/blend-capital/liquidation-bot.git
+
+## automated bot
+
+source:
+    https://github.com/script3/auctioneer-bot
+
+docker:
+    docker pull script3/auctioneer-bot:latest

@@ -8,6 +8,11 @@ https://docs.blend.capital/pool-creators/tutorial-setting-up-a-pool
 
 steps:
 
+0. Deploy an oracle aggregator.  This will often be a deployment of the 
+   `oracle-aggregator` contract, set to use one source for USDC and
+   another as the default.
+   CBWL56K3NK6XHUNTKDZNSEL37FR5CZMB6PF33KXSNHIDD5LLD4OT6IXB (ybx public)
+
 1. Deploy new pool
    * contract address: pool factory contract id
    * function: deploy()

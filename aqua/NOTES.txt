@@ -9,7 +9,9 @@ swap_chained \
 --in_amount 100000 \
 --out_min 1
 
-# there are a lot of chains :(
+# there are a lot of pools :(
+
+https://amm-api.aqua.network/pools/
 
 #--swaps_chain '[
 # [
