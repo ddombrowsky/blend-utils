@@ -8,13 +8,49 @@ Creation is `new_interest_auction`
 
 https://stellar.expert/explorer/public/tx/a9b878274afd4cca2592fe813f4169f14b8d27d4d0816e6ccde8f949e5334248
 
-Listen for events on the pool contract to know when it's starting.
-https://github.com/blend-capital/liquidation-bot.git
-
-## automated bot
+## automated auction bot
 
 source:
     https://github.com/script3/auctioneer-bot
 
 docker:
     docker pull script3/auctioneer-bot:latest
+
+config.json:
+* `minProfitPct` is from 0.00 to 1.00, 0.1 = 10%.
+* `minHealthFactor` 0 to inf, 1.1=110%.  Equal to collateral / liabilities.
+  Note that this the HF for the _bidding_ bot.  The collateral and liabilities are
+  transfered directly to the bidding bot, so the HF of the bot's account
+  needs to be high enough to handle that.  That means it should already have collateral
+  in the bank.
+
+liquidation fills:
+
+https://stellar.expert/explorer/public/tx/7bbaf8aabede72a3fb8fa8aea0f3b2bfc0e97d35a239daa8b64f016f903be444
+request_type: 6
+
+In the UI, the "auctions" tab will list the final value the auction was filled at.
+
+## blend bot
+
+This is similar to, but not the same as, the script3 auction bot.
+Noted here only for reference.  I had better luck with the auction bot.
+
+Listen for events on the pool contract to know when it's starting.
+https://github.com/blend-capital/liquidation-bot.git
+
+## local RPC
+
+It is possible to run the auction bot against a public RPC like
+`soroban-rpc.creit.tech`, but you will quickly run into rate limiting
+issues.  
+
+NOTE: The consensus node configurations can be found from stellarbeat.io.
+For example, see 
+https://stellarbeat.io/nodes/GCGB2S2KGYARPVIA37HYZXVRM2YZUEXA6S33ZU5BUDC6THSB62LZSTYH?center=1
+and click "stellar core config".  This will show the URLs and the public key.
+
+https://developers.stellar.org/docs/data/rpc/admin-guide#docker-image
+
+https://dev.to/row-bear/rpc-for-soroban-mainnet-36eo
+
