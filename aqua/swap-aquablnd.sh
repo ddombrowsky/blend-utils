@@ -42,13 +42,13 @@ while [ $good = 1 ] ; do
     perl -e '
         $tok = int('$tok');
         $an = '$AQUA_N'+'$FEEMARGIN';
-        print("sell usdc > ".($an/($tok/10000000))."\n");
+        print("sell blnd > ".($an/($tok/10000000))."\n");
         print("buy '$TOKSTR' < ".(($tok/10000000)/$an)."\n");
     '
 
     tokv=`perl -e '$tok = int('$tok');print(($tok/10000000));'`
 
-    echo "sdex swap $tokv AQUA -> $AQUA_N+$FEEMARGIN $TOKSTR"
+    echo "sdex swap $tokv BLND -> $AQUA_N+$FEEMARGIN $TOKSTR"
     sleep 3
     node sdex/index-blndaqua.js $tokv `echo $AQUA_N+$FEEMARGIN|bc` inverse | tee out2
     if [ $PIPESTATUS = 0 ] ; then
