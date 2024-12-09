@@ -2,6 +2,10 @@
 
 PUBKEY=$1
 
+if [ "$PUBKEY" = "" ] ; then
+    PUBKEY=GAVG3ODZ4SAVK2WJL3F3RT265RL7P6QNOMA6NL3XDAREKSX3OWWMXF4R
+fi
+
 echo $PUBKEY
 
 soroban contract invoke \
