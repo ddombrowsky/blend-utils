@@ -3,3 +3,6 @@ pubkey
 *.xz
 *.pem
 core
+tail.sh.lastdiff
+tail.sh.new
+tail.sh.old

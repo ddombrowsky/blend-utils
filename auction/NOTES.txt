@@ -23,6 +23,8 @@ config.json:
   transfered directly to the bidding bot, so the HF of the bot's account
   needs to be high enough to handle that.  That means it should already have significant
   collateral in the bank.  The HF is calculated including the fillers existing deposits.
+* example (v1):
+https://github.com/script3/auctioneer-bot/blob/main/example.config.json
 
 liquidation fills:
 
