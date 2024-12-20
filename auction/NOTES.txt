@@ -17,12 +17,12 @@ docker:
     docker pull script3/auctioneer-bot:latest
 
 config.json:
-* `minProfitPct` is from 0.00 to 1.00, 0.1 = 10%.
+* `defaultProfitPct` is from 0.00 to 1.00, 0.1 = 10%.
 * `minHealthFactor` 0 to inf, 1.1=110%.  Equal to collateral / liabilities.
   Note that this the HF for the _bidding_ bot.  The collateral and liabilities are
   transfered directly to the bidding bot, so the HF of the bot's account
-  needs to be high enough to handle that.  That means it should already have collateral
-  in the bank.
+  needs to be high enough to handle that.  That means it should already have significant
+  collateral in the bank.  The HF is calculated including the fillers existing deposits.
 
 liquidation fills:
 
