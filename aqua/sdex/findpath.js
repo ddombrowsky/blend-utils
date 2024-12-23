@@ -123,7 +123,9 @@ async function executeSwap(estimateResult) {
 
     const result = await horizonServer.submitTransaction(preparedTx);
 
-    const meta = xdr.TransactionMeta.fromXDR(result.result_meta_xdr, 'base64');
+    const resultTx = await server.getTransaction(result.id);
+
+    const meta = resultTx.resultMetaXdr;
 
     const returnValue = meta.v3().sorobanMeta().returnValue();
 
