@@ -59,6 +59,8 @@ async function findSwapPath() {
     });
 
     const estimateResponse = await fetch(`${baseApi}/find-path/`, { method: 'POST', body, headers });
+    //console.log(await estimateResponse.text());
+    //console.log(`${baseApi}/find-path`);
     const estimateResult = await estimateResponse.json();
 
     //console.log(estimateResult);
@@ -123,11 +125,23 @@ async function executeSwap(estimateResult) {
 
     const result = await horizonServer.submitTransaction(preparedTx);
 
-    const resultTx = await server.getTransaction(result.id);
+    let retry=4;
+    let returnValue;
+    while(retry-->0) {
+      // wait a for the tx to make it to soroban (grrrrrrr)
+      await new Promise(resolve => setTimeout(resolve, 1000));
 
-    const meta = resultTx.resultMetaXdr;
+      const resultTx = await server.getTransaction(result.id);
+      const meta = resultTx.resultMetaXdr;
+      if (typeof(meta) !== 'undefined') {
+        returnValue = meta.v3().sorobanMeta().returnValue();
+        retry = -99;
+      }
+    }
 
-    const returnValue = meta.v3().sorobanMeta().returnValue();
+    if (retry==0) {
+      throw new Error('swap failed');
+    }
 
     const swapResult = u128ToInt(returnValue.value());
 
