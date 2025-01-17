@@ -56,5 +56,7 @@ while [ $good = 1 ] ; do
         good=0
     fi
 
+    # press ENTER to exit
+    read -t 1 foo && exit
     sleep 2
 done
