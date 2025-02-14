@@ -8,7 +8,7 @@ BLND_N=$1
 PRICE=$2
 
 # in BLND
-FEEMARGIN=0.04
+FEEMARGIN=0.14
 
 BLND=`echo $BLND_N*10000000|bc|sed -e 's/\..*//'`
 PRICESTR=`echo $PRICE*10000000|bc|sed -e 's/\..*//'`

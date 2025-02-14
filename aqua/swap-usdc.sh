@@ -8,7 +8,7 @@ USDC_N=$1
 PRICE=$2
 
 # in USDC
-FEEMARGIN=0.005
+FEEMARGIN=0.028
 
 USDC=`echo $USDC_N*10000000|bc|sed -e 's/\..*//'`
 MIN_OUT=`echo $USDC/$PRICE|bc|sed -e 's/\..*//'`

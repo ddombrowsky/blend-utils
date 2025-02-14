@@ -8,7 +8,7 @@ AQUA_N=$1
 PRICE=$2
 
 # in AQUA
-FEEMARGIN=7
+FEEMARGIN=20
 
 AQUA=`echo $AQUA_N*10000000|bc|sed -e 's/\..*//'`
 MIN_OUT=`echo $AQUA/$PRICE|bc|sed -e 's/\..*//'`
