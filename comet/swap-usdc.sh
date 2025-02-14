@@ -46,8 +46,9 @@ while [ $good = 1 ] ; do
     tok=`jq .[0] out`
     perl -e '
         $tok = int('$tok');
-        print("buy  usdc < ".(($tok/10000000)/'$USDC_N')."\n");
-        print("sell '$TOKSTR' > ".(('$USDC_N'+'$FEEMARGIN')/($tok/10000000))."\n");
+        $un = '$USDC_N'+'$FEEMARGIN';
+        print("buy  usdc < ".(($tok/10000000)/$un)."\n");
+        print("sell '$TOKSTR' > ".($un/($tok/10000000))."\n");
     '
 
     tokv=`perl -e '$tok = int('$tok');print(($tok/10000000));'`
