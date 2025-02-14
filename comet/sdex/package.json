@@ -10,5 +10,10 @@
   "description": "",
   "dependencies": {
     "@stellar/stellar-sdk": "^12.2.0"
+  },
+  "devDependencies": {
+    "eslint": "^9.20.1",
+    "eslint-formatter-compact": "^8.40.0",
+    "globals": "^15.15.0"
   }
 }
