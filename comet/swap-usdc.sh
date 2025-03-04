@@ -66,6 +66,9 @@ while [ $good = 1 ] ; do
         srcv=0
     fi
 
+    # press ENTER to exit
+    read -t 1 foo && exit
+
     echo "$USDC_N+$FEEMARGIN < $srcv ?"
     if perl -e "($USDC_N+$FEEMARGIN)<$srcv"'&&exit(0)||exit(1)' ; then
         echo yes, continuing
@@ -76,7 +79,5 @@ while [ $good = 1 ] ; do
         good=0
     fi
 
-    # press ENTER to exit
-    read -t 1 foo && exit
     sleep 2
 done
