@@ -34,7 +34,7 @@ while [ $good = 1 ] ; do
       $AQUA_CONTRACT \
       $USDC $MIN_OUT | tee out
 
-    [ \! -s out ] && exit
+    [ \! -s out ] && exit 1
 
     tok=`cat out`
     perl -e '
@@ -47,7 +47,7 @@ while [ $good = 1 ] ; do
     tokv=`perl -e '$tok = int('$tok');print(($tok/10000000));'`
     pricev=`perl -e '
         $tok = int('$tok');
-        printf("%0.7f",(('$USDC_N'+'$FEEMARGIN')*1.0001)/($tok/10000000));'`
+        printf("%0.7f",(('$USDC_N'+'$FEEMARGIN')*1.003)/($tok/10000000));'`
     buytokv=`echo $USDC_N+$FEEMARGIN|bc`
 
     echo "sdex swap $tokv $TOKSTR -> $USDC_N+$FEEMARGIN USDC"
