@@ -12,7 +12,7 @@ const {
     BASE_FEE,
     TimeoutInfinite,
     Keypair,
-    Horizon,
+    Horizon
 } = StellarSdk;
 
 // Step 1: Specify your secret key, input token, output token and input token amount
@@ -96,10 +96,33 @@ async function executeSwap(estimateResult) {
 
     // No need to generate swapsChain manually, use value received from find-path api
     const swapsChain = xdr.ScVal.fromXDR(estimateResult.swap_chain_xdr, 'base64');
-    const tokenInScVal = Address.contract(StrKey.decodeContract(tokenIn)).toScVal()
+    const tokenInC = Address.contract(StrKey.decodeContract(tokenIn));
+    const tokenInScVal = tokenInC.toScVal()
     const amountU128 = new XdrLargeInt('u128', amount.toFixed()).toU128();
     const amountWithSlippage = estimateResult.amount * 0.99; // slippage 1%
     const amountWithSlippageU128 = new XdrLargeInt('u128', amountWithSlippage.toFixed()).toU128();
+
+    // It is NOT POSSIBLE to get the issue/code from a contract ID.
+    let assetIssuer;
+    let assetCode;
+    if (tokenIn === 'CCW67TSZV3SSS2HXMBQ5JFGCKJNXKZM7UQUWUZPUTHXSTZLEO7SJMI75') {
+      assetIssuer = 'GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN';
+      assetCode = 'USDC';
+    }
+
+    if (assetIssuer) {
+      const horizonAccount = await horizonServer.loadAccount(keypair.publicKey());
+      const hzToken = horizonAccount.balances.find(x =>
+        x.asset_issuer === assetIssuer &&
+        x.asset_code === assetCode
+      );
+      if (hzToken) {
+        const hzTokenBalance = hzToken.balance * 10000000;
+        if (hzTokenBalance < amount) {
+          throw new Error(`${assetCode} balance too low: ${hzTokenBalance} < ${amount}`);
+        }
+      }
+    }
 
     const account = await server.getAccount(keypair.publicKey());
     const tx = new TransactionBuilder(account, {
