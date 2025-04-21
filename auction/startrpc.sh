@@ -3,7 +3,8 @@
 docker run --restart always --name soroban1 -p 8001:8001 -p 8000:8000 \
     --log-driver json-file --log-opt max-size=100m --log-opt max-file=2 \
     -v ./core:/config stellar/stellar-rpc \
-    --config-path /config/coreconfig.toml
+    --config-path /config/coreconfig.toml \
+    -h soroban1.local
 
 
 #docker run -p 8001:8001 -p 8000:8000 \

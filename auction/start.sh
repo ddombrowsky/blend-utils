@@ -10,3 +10,6 @@ docker run --restart always --name auction2 -d -v ./data-ybx:/app/data script3/a
 
 # fxdao
 docker run --restart always --name auction3 -d -v ./data-fxdao:/app/data script3/auctioneer-bot:latest
+
+# reflector
+docker run --restart always --name auction4 -d -v ./data-refl:/app/data script3/auctioneer-bot:latest

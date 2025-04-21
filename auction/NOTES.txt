@@ -56,3 +56,7 @@ https://developers.stellar.org/docs/data/rpc/admin-guide#docker-image
 
 https://dev.to/row-bear/rpc-for-soroban-mainnet-36eo
 
+## Get IP of soroban
+
+docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' soroban1
+
