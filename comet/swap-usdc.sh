@@ -41,7 +41,7 @@ while [ $good = 1 ] ; do
     --max_price $PRICESTR \
     --user xbull | tee out
 
-    [ \! -s out ] && exit
+    [ \! -s out ] && exit 1
 
     tok=`jq .[0] out`
     perl -e '
