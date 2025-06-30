@@ -1,6 +1,11 @@
 #!/bin/sh
 
+# https://github.com/blend-capital/blend-contracts-v2/blob/main/pool/src/errors.rs
 # error 1215 = interest too small
+# error 1200 = bad request
+# error 1208 = max positions.  Auction lots have max of 5.
+
+LOG=auction.log
 
 # fxdao
 echo fxdao
@@ -10,8 +15,8 @@ soroban contract invoke \
     --network public --fee 10000000 -- \
     new_interest_auction \
     --assets '["CAS3J7GYLGXMF6TDJBBYYSE3HQ6BBSMLNUQ34T6TZMYMW2EVH34XOWMA","CDIKURWHYS4FFTR5KOQK6MBFZA2K3E26WGBQI6PXBYWZ4XIOPJHDFJKP","CBN3NCJSMOQTC6SPEYK3A44NU4VS3IPKTARJLI3Y77OH27EWBY36TP7U","CBCO65UOWXY2GR66GOCMCN6IU3Y45TXCPBY3FLUNL4AOUMOCKVIVV6JC"]' > \
-    fxdao.log 2>&1
-    grep Error fxdao.log || exit
+    $LOG 2>&1
+    grep Error $LOG || exit
 
 # reflector
 echo reflrector
@@ -21,8 +26,36 @@ soroban contract invoke \
     --network public --fee 10000000 -- \
     new_interest_auction \
     --assets '["CAS3J7GYLGXMF6TDJBBYYSE3HQ6BBSMLNUQ34T6TZMYMW2EVH34XOWMA","CCW67TSZV3SSS2HXMBQ5JFGCKJNXKZM7UQUWUZPUTHXSTZLEO7SJMI75","CBLLEW7HD2RWATVSMLAGWM4G3WCHSHDJ25ALP4DI6LULV5TU35N2CIZA"]' > \
-    reflrector.log 2>&1
-    grep Error reflrector.log || exit
+    $LOG 2>&1
+    grep Error $LOG || exit
+
+# ybx v2
+echo ybx v2 - set 1
+soroban contract invoke \
+    --id CCCCIQSDILITHMM7PBSLVDT5MISSY7R26MNZXCX4H7J5JQ5FPIYOGYFS \
+    --source-account xbull \
+    --network public --fee 10000000 -- \
+    new_auction \
+      --percent 100 \
+      --lot '["CAS3J7GYLGXMF6TDJBBYYSE3HQ6BBSMLNUQ34T6TZMYMW2EVH34XOWMA", "CCW67TSZV3SSS2HXMBQ5JFGCKJNXKZM7UQUWUZPUTHXSTZLEO7SJMI75", "CDTKPWPLOURQA2SGTKTUQOWRCBZEORB4BWBOMJ3D3ZTQQSGE5F6JBQLV", "CB226ZOEYXTBPD3QEGABTJYSKZVBP2PASEISLG3SBMTN5CE4QZUVZ3CE", "CAL6ER2TI6CTRAY6BFXWNWA7WTYXUXTQCHUBCIBU5O6KM3HJFG6Z6VXV"]' \
+      --user 'CAQQR5SWBXKIGZKPBZDH3KM5GQ5GUTPKB7JAFCINLZBC5WXPJKRG3IM7' \
+      --auction_type 2 \
+      --bid '[ "CAS3FL6TLZKDGGSISDBWGGPXT3NRR4DYTZD7YOD3HMYO6LTJUVGRVEAM" ]' > \
+    $LOG 2>&1
+    grep Error $LOG || exit
+echo ybx v2 - set 2
+soroban contract invoke \
+    --id CCCCIQSDILITHMM7PBSLVDT5MISSY7R26MNZXCX4H7J5JQ5FPIYOGYFS \
+    --source-account xbull \
+    --network public --fee 10000000 -- \
+    new_auction \
+      --percent 100 \
+      --lot '["CBLV4ATSIWU67CFSQU2NVRKINQIKUZ2ODSZBUJTJ43VJVRSBTZYOPNUR", "CAUIKL3IYGMERDRUN6YSCLWVAKIFG5Q4YJHUKM4S4NJZQIA3BAS6OJPK"]' \
+      --user 'CAQQR5SWBXKIGZKPBZDH3KM5GQ5GUTPKB7JAFCINLZBC5WXPJKRG3IM7' \
+      --auction_type 2 \
+      --bid '[ "CAS3FL6TLZKDGGSISDBWGGPXT3NRR4DYTZD7YOD3HMYO6LTJUVGRVEAM" ]' > \
+    $LOG 2>&1
+    grep Error $LOG || exit
 
 # ybx
 echo ybx
@@ -32,16 +65,31 @@ soroban contract invoke \
     --network public --fee 10000000 -- \
     new_interest_auction \
     --assets '["CAS3J7GYLGXMF6TDJBBYYSE3HQ6BBSMLNUQ34T6TZMYMW2EVH34XOWMA","CCW67TSZV3SSS2HXMBQ5JFGCKJNXKZM7UQUWUZPUTHXSTZLEO7SJMI75","CDTKPWPLOURQA2SGTKTUQOWRCBZEORB4BWBOMJ3D3ZTQQSGE5F6JBQLV","CAUIKL3IYGMERDRUN6YSCLWVAKIFG5Q4YJHUKM4S4NJZQIA3BAS6OJPK"]' > \
-    ybx.log 2>&1
-    grep Error ybx.log || exit
+    $LOG 2>&1
+    grep Error $LOG || exit
 
 # fixed
-echo fixed
+#echo fixed
+#soroban contract invoke \
+#    --id CDVQVKOY2YSXS2IC7KN6MNASSHPAO7UN2UR2ON4OI2SKMFJNVAMDX6DP \
+#    --source-account xbull \
+#    --network public --fee 10000000 -- \
+#    new_interest_auction \
+#    --assets '["CAS3J7GYLGXMF6TDJBBYYSE3HQ6BBSMLNUQ34T6TZMYMW2EVH34XOWMA","CCW67TSZV3SSS2HXMBQ5JFGCKJNXKZM7UQUWUZPUTHXSTZLEO7SJMI75"]' > \
+#    $LOG 2>&1
+#    grep Error $LOG || exit
+
+# fixed v2
+echo fixed v2
 soroban contract invoke \
-    --id CDVQVKOY2YSXS2IC7KN6MNASSHPAO7UN2UR2ON4OI2SKMFJNVAMDX6DP \
+    --id CAJJZSGMMM3PD7N33TAPHGBUGTB43OC73HVIK2L2G6BNGGGYOSSYBXBD \
     --source-account xbull \
     --network public --fee 10000000 -- \
-    new_interest_auction \
-    --assets '["CAS3J7GYLGXMF6TDJBBYYSE3HQ6BBSMLNUQ34T6TZMYMW2EVH34XOWMA","CCW67TSZV3SSS2HXMBQ5JFGCKJNXKZM7UQUWUZPUTHXSTZLEO7SJMI75"]' > \
-    fixed.log 2>&1
-    grep Error fixed.log || exit
+    new_auction \
+      --percent 100 \
+      --lot '["CAS3J7GYLGXMF6TDJBBYYSE3HQ6BBSMLNUQ34T6TZMYMW2EVH34XOWMA","CCW67TSZV3SSS2HXMBQ5JFGCKJNXKZM7UQUWUZPUTHXSTZLEO7SJMI75", "CDTKPWPLOURQA2SGTKTUQOWRCBZEORB4BWBOMJ3D3ZTQQSGE5F6JBQLV"]' \
+      --user 'CAQQR5SWBXKIGZKPBZDH3KM5GQ5GUTPKB7JAFCINLZBC5WXPJKRG3IM7' \
+      --auction_type 2 \
+      --bid '[ "CAS3FL6TLZKDGGSISDBWGGPXT3NRR4DYTZD7YOD3HMYO6LTJUVGRVEAM" ]' > \
+    $LOG 2>&1
+    grep Error $LOG || exit
