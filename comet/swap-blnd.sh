@@ -30,10 +30,10 @@ export SECRET_KEY=`stellar keys show xbull`
 TOKSTR=BLND
 while [ $good = 1 ] ; do
     # NOTE: error #22 = bad limit price
-    soroban contract invoke \
+    stellar contract invoke \
     --id CAS3FL6TLZKDGGSISDBWGGPXT3NRR4DYTZD7YOD3HMYO6LTJUVGRVEAM \
     --source-account xbull \
-    --network public --fee 10000000 -- \
+    --network mainnet --fee 10000000 -- \
     swap_exact_amount_in \
     --token_in $BLND_CONTRACT \
     --token_amount_in $BLND \
