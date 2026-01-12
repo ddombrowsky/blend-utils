@@ -15,4 +15,4 @@ docker run --restart always --name auction3 -d -v ./data-fxdao:/app/data script3
 docker run --restart always --name auction4 -d -v ./data-refl:/app/data script3/auctioneer-bot:v1.0.0-beta
 
 # v2
-docker run --restart always --name auction5 -d -v ./data-v2:/app/data script3/auctioneer-bot:latest
+docker run --name auction5 -d -v ./data-v2:/app/data script3/auctioneer-bot:v2.1.0-beta
