@@ -24,7 +24,10 @@ config.json:
   needs to be high enough to handle that.  That means it should already have significant
   collateral in the bank.  The HF is calculated including the fillers existing deposits.
 * example (v1):
-https://github.com/script3/auctioneer-bot/blob/main/example.config.json
+  https://github.com/script3/auctioneer-bot/blob/main/example.config.json
+* for auctions, lot values move 0.005 (0.5 basis points) per block for the first 200 blocks,
+  then bid value moves down 0.006 after that.  So any change less than that will not
+  affect the block the bidder goes for.
 
 liquidation fills:
 
