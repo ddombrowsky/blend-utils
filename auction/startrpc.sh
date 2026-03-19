@@ -1,5 +1,7 @@
 #!/bin/sh
 
+#    -m 12g \
+
 docker run -d --restart always --name soroban1 -p 8001:8001 -p 8000:8000 \
     --log-driver json-file --log-opt max-size=100m --log-opt max-file=2 \
     -h soroban1.local \
@@ -7,6 +9,8 @@ docker run -d --restart always --name soroban1 -p 8001:8001 -p 8000:8000 \
     --config-path /config/coreconfig.toml
 
 docker logs -f soroban1
+
+# docker stats soroban1
 
 # docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' soroban1
 
