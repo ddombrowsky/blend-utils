@@ -126,7 +126,7 @@ async function executeSwap(estimateResult) {
 
     const account = await server.getAccount(keypair.publicKey());
     const tx = new TransactionBuilder(account, {
-        fee: BASE_FEE,
+        fee: BASE_FEE * 100,
         networkPassphrase: Networks.PUBLIC,
     })
         .addOperation(
