@@ -3,12 +3,12 @@
 AMT=`echo $1*10000000|bc|sed -e 's/\..*//'`
 echo AMT=$AMT
 
-DEST=GAVG3ODZ4SAVK2WJL3F3RT265RL7P6QNOMA6NL3XDAREKSX3OWWMXF4R
+DEST=GBE4FY6RLT4KYM35MR47ZXATCG67ONZ7VKESEMHFPF2QF3VVHV2QM6L2
 
-soroban contract invoke \
+stellar contract invoke \
     --id CAS3FL6TLZKDGGSISDBWGGPXT3NRR4DYTZD7YOD3HMYO6LTJUVGRVEAM \
     --source-account xbull \
-    --network public --fee 10000000 -- \
+    --network mainnet --fee 10000000 -- \
     transfer \
     --from xbull \
     --to $DEST \
