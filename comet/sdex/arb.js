@@ -19,6 +19,11 @@
  *   --poll <n>          Seconds between polls (default: 5)
  *   --max-fee <n>       Max Soroban fee in XLM (default: 1)
  *   --rebalance <n>     Rebalance threshold in USD (default: 0.06)
+ *   --xlm-cost <n>      Est. XLM spent per arb cycle, deducted from profit (default: 0.01)
+ *
+ * Profit is NET of: AMM/DEX fees (baked into prices) + XLM network tx cost
+ * (--xlm-cost converted to USDC at the live XLM price). --min-profit is the
+ * margin required ON TOP of those costs.
  */
 
 const Stellar = require('@stellar/stellar-sdk');
@@ -41,6 +46,7 @@ const POLL_MS             = parseInt(getArg('--poll', '5'), 10) * 1000;
 const MAX_FEE_XLM         = parseFloat(getArg('--max-fee', '1'));
 const MAX_FEE_STR         = Math.round(MAX_FEE_XLM * 1e7).toString();
 const REBALANCE_THRESHOLD = parseFloat(getArg('--rebalance', '0.06')); // USD imbalance to trigger
+const XLM_COST            = parseFloat(getArg('--xlm-cost', '0.01')); // est. total XLM spent per arb cycle (Soroban swap ~0.005 + classic ~0; padded for fee spikes)
 const SLIPPAGE            = 0.005; // 0.5% slippage tolerance on each leg
 
 // ── Addresses ─────────────────────────────────────────────────────────────────
@@ -75,7 +81,7 @@ const i128 = (n) => nativeToScVal(typeof n === 'bigint' ? n : BigInt(Math.round(
 const addr  = (s) => nativeToScVal(s, { type: 'address' });
 
 // ── P&L / activity tracker ────────────────────────────────────────────────────
-const pnl = { trades: 0, grossProfit: 0, skipped: 0, rebalances: 0 };
+const pnl = { trades: 0, grossProfit: 0, netProfit: 0, skipped: 0, rebalances: 0 };
 
 // ── Utilities ─────────────────────────────────────────────────────────────────
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -145,20 +151,27 @@ async function getWalletBalances(rpc, cometUsdcPerBlnd) {
 async function checkOpportunity(rpc, horizon, cometUsdcPerBlnd) {
   const results = [];
 
-  // Fetch the reverse Comet price and SDEX paths concurrently
+  // Fetch the reverse Comet price, SDEX paths, and live XLM/USDC price concurrently
   const blndEquiv = USDC_TRADE / cometUsdcPerBlnd; // ~BLND we'd get buying on Comet
-  const [cometBlndPerUsdc, sellPath, buyPath] = await Promise.all([
+  const [cometBlndPerUsdc, sellPath, buyPath, xlmPath] = await Promise.all([
     cometSpotPrice(rpc, BLND_TOKEN, USDC_TOKEN),
     horizon.strictSendPaths(blndAsset, blndEquiv.toFixed(7), [usdcAsset]).call(),
     horizon.strictSendPaths(usdcAsset, USDC_TRADE.toFixed(7), [blndAsset]).call(),
+    horizon.strictSendPaths(Asset.native(), '1', [usdcAsset]).call(),
   ]);
+
+  // XLM network cost of one arb cycle (1 Soroban + 1 SDEX tx), valued in USDC.
+  const xlmUsdc   = xlmPath.records.length > 0 ? parseFloat(xlmPath.records[0].destination_amount) : 0;
+  const txCostUsd = XLM_COST * xlmUsdc;
 
   // ── Direction A: Comet USDC→BLND, then SDEX BLND→USDC ───────────────────
   if (sellPath.records.length > 0) {
     const sdexUsdcPerBlnd = parseFloat(sellPath.records[0].destination_amount) / blndEquiv;
     // Profit: sell BLND on SDEX at sdexUsdcPerBlnd, bought at cometUsdcPerBlnd
-    const profit    = (sdexUsdcPerBlnd - cometUsdcPerBlnd) * blndEquiv;
-    const profitPct = (sdexUsdcPerBlnd - cometUsdcPerBlnd) / cometUsdcPerBlnd * 100;
+    const profit       = (sdexUsdcPerBlnd - cometUsdcPerBlnd) * blndEquiv;
+    const profitPct    = (sdexUsdcPerBlnd - cometUsdcPerBlnd) / cometUsdcPerBlnd * 100;
+    const netProfit    = profit - txCostUsd;          // after XLM network cost
+    const netProfitPct = netProfit / USDC_TRADE * 100;
     const blndUnits = Math.round(blndEquiv * 1e7);
     results.push({
       dir: 'A',
@@ -171,6 +184,9 @@ async function checkOpportunity(rpc, horizon, cometUsdcPerBlnd) {
       usdcOut: USDC_TRADE + profit,
       profit,
       profitPct,
+      txCostUsd,
+      netProfit,
+      netProfitPct,
       sdexRecord: sellPath.records[0],
       leg1: 'comet-buy',
     });
@@ -184,8 +200,10 @@ async function checkOpportunity(rpc, horizon, cometUsdcPerBlnd) {
     // cometBlndPerUsdc = BLND cost per USDC on Comet → invert to get USDC per BLND
     const cometUsdcPerBlndSell = 1 / cometBlndPerUsdc;
     // Profit: sell BLND on Comet at cometUsdcPerBlndSell, bought at sdexUsdcPerBlnd
-    const profit    = (cometUsdcPerBlndSell - sdexUsdcPerBlnd) * blndFromSdex;
-    const profitPct = (cometUsdcPerBlndSell - sdexUsdcPerBlnd) / sdexUsdcPerBlnd * 100;
+    const profit       = (cometUsdcPerBlndSell - sdexUsdcPerBlnd) * blndFromSdex;
+    const profitPct    = (cometUsdcPerBlndSell - sdexUsdcPerBlnd) / sdexUsdcPerBlnd * 100;
+    const netProfit    = profit - txCostUsd;          // after XLM network cost
+    const netProfitPct = netProfit / USDC_TRADE * 100;
     const blndUnits = Math.round(blndFromSdex * 1e7);
     results.push({
       dir: 'B',
@@ -198,13 +216,16 @@ async function checkOpportunity(rpc, horizon, cometUsdcPerBlnd) {
       usdcOut: USDC_TRADE + profit,
       profit,
       profitPct,
+      txCostUsd,
+      netProfit,
+      netProfitPct,
       sdexRecord: buyPath.records[0],
       leg1: 'sdex-buy',
     });
   }
 
   if (results.length === 0) return null;
-  results.sort((a, b) => b.profitPct - a.profitPct);
+  results.sort((a, b) => b.netProfitPct - a.netProfitPct);
   return results[0];
 }
 
@@ -309,10 +330,23 @@ async function executeSdexPath(horizon, sendAsset, sendAmt, destAsset, destMin, 
   tx.sign(keypair);
 
   log(`    Submitting SDEX path payment...`);
-  const resp = await horizon.submitTransaction(tx);
+  let resp;
+  try {
+    resp = await horizon.submitTransaction(tx);
+  } catch (err) {
+    // Horizon returns HTTP 400 (axios throws) when the tx is rejected. The useful
+    // reason lives in error.response.data.extras.result_codes — surface it instead
+    // of the opaque "Request failed with status code 400".
+    const extras = err.response?.data?.extras;
+    const codes  = extras?.result_codes;
+    if (codes) {
+      throw new Error(`SDEX tx rejected: ${JSON.stringify(codes)}` +
+        (extras.result_xdr ? ` (result_xdr ${extras.result_xdr})` : ''));
+    }
+    throw err; // not a Horizon rejection (network/timeout/etc.)
+  }
   if (!resp.successful) {
-    const codes = resp.extras?.result_codes;
-    throw new Error(`SDEX tx failed: ${JSON.stringify(codes)}`);
+    throw new Error(`SDEX tx failed: ${JSON.stringify(resp.extras?.result_codes)}`);
   }
   log(`    SDEX SUCCESS — tx: ${resp.hash}`);
   return { hash: resp.hash };
@@ -390,19 +424,22 @@ async function poll(rpc, horizon) {
 
   // ── 2. Arbitrage check ────────────────────────────────────────────────────
   if (opp) {
-    const sign = opp.profitPct >= 0 ? '+' : '';
+    const sign    = opp.profitPct >= 0 ? '+' : '';
+    const netSign = opp.netProfitPct >= 0 ? '+' : '';
     log(`  Arb  [${opp.dir}] ${opp.label}`);
     log(`    Comet ${opp.cometPrice.toFixed(6)} USDC/BLND | SDEX ${opp.sdexPrice.toFixed(6)} | spread ${sign}${opp.profitPct.toFixed(3)}%`);
-    log(`    ${opp.usdcIn.toFixed(4)} USDC → ${opp.blndMid.toFixed(4)} BLND → ${fmtUsdc(opp.usdcOut)} USDC  (${sign}${opp.profit.toFixed(6)} USDC)`);
+    log(`    ${opp.usdcIn.toFixed(4)} USDC → ${opp.blndMid.toFixed(4)} BLND → ${fmtUsdc(opp.usdcOut)} USDC  (gross ${sign}${opp.profit.toFixed(6)} USDC)`);
+    log(`    tx cost -$${opp.txCostUsd.toFixed(6)} (${XLM_COST} XLM) → NET ${netSign}${opp.netProfit.toFixed(6)} USDC (${netSign}${opp.netProfitPct.toFixed(3)}%)`);
 
-    if (opp.profitPct >= MIN_PROFIT_PCT) {
-      log(`  *** ARB SIGNAL: ${opp.profitPct.toFixed(3)}% >= ${MIN_PROFIT_PCT}% ***`);
+    if (opp.netProfitPct >= MIN_PROFIT_PCT) {
+      log(`  *** ARB SIGNAL: net ${opp.netProfitPct.toFixed(3)}% >= ${MIN_PROFIT_PCT}% ***`);
       if (EXECUTE) {
         try {
           await executeArb(rpc, horizon, opp);
           pnl.trades++;
           pnl.grossProfit += opp.profit;
-          log(`  Arb done — session gross P&L: +${pnl.grossProfit.toFixed(6)} USDC over ${pnl.trades} trade(s)`);
+          pnl.netProfit   += opp.netProfit;
+          log(`  Arb done — session net P&L: +${pnl.netProfit.toFixed(6)} USDC over ${pnl.trades} trade(s)`);
         } catch (e) {
           log(`  Arb execution error: ${e.message}`);
         }
@@ -411,7 +448,7 @@ async function poll(rpc, horizon) {
       }
     } else {
       pnl.skipped++;
-      log(`  Arb below threshold (${MIN_PROFIT_PCT}%) — skipping.`);
+      log(`  Arb below threshold (net ${netSign}${opp.netProfitPct.toFixed(3)}% < ${MIN_PROFIT_PCT}%) — skipping.`);
     }
   } else {
     log('  Arb: no opportunity this cycle.');
@@ -469,7 +506,8 @@ async function main() {
   console.log('BLND/USDC Arbitrage + Rebalance Bot');
   console.log(`  Wallet         : ${walletPub}`);
   console.log(`  Arb trade size : ${USDC_TRADE} USDC`);
-  console.log(`  Arb threshold  : ${MIN_PROFIT_PCT}% gross profit`);
+  console.log(`  Arb threshold  : ${MIN_PROFIT_PCT}% net profit (after XLM tx cost)`);
+  console.log(`  XLM cost/cycle : ${XLM_COST} XLM (deducted from profit)`);
   console.log(`  Rebal threshold: $${REBALANCE_THRESHOLD.toFixed(2)} USD imbalance`);
   console.log(`  Slippage floor : ${(SLIPPAGE * 100).toFixed(1)}% per leg`);
   console.log(`  Poll           : ${POLL_MS / 1000}s`);
@@ -481,6 +519,7 @@ async function main() {
     console.log('── Session summary ──────────────────────────────');
     console.log(`  Arb trades      : ${pnl.trades}`);
     console.log(`  Gross arb P&L   : +${pnl.grossProfit.toFixed(6)} USDC`);
+    console.log(`  Net arb P&L     : +${pnl.netProfit.toFixed(6)} USDC (after XLM tx cost)`);
     console.log(`  Arb skipped     : ${pnl.skipped}`);
     console.log(`  Rebalances done : ${pnl.rebalances}`);
     console.log('─────────────────────────────────────────────────');
