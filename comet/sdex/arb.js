@@ -209,27 +209,44 @@ async function checkOpportunity(rpc, horizon, cometUsdcPerBlnd) {
 }
 
 // ── Soroban execution ─────────────────────────────────────────────────────────
-async function executeCometSwap(rpc, tokenIn, amtInUnits, tokenOut, minOutUnits) {
-  const op = new Contract(COMET_POOL).call(
-    'swap_exact_amount_in',
-    addr(tokenIn),
-    i128(amtInUnits),
-    addr(tokenOut),
-    i128(minOutUnits),
-    i128(MAX_PRICE_UNITS),
-    addr(walletPub),
-  );
-
+// Derives min_amount_out from the *actual* simulated output rather than a naive
+// spot-price estimate. Comet's swap fee makes the spot estimate optimistic, which
+// caused ERR_LIMIT_OUT (Error(Contract, #20)) when the shortfall exceeded our
+// slippage tolerance. By sizing the floor off the real sim, slippage protection
+// guards only the gap between simulation and on-chain execution — which is its job.
+async function executeCometSwap(rpc, tokenIn, amtInUnits, tokenOut, slippage = SLIPPAGE) {
   // Fetch real account (need actual sequence number for submission)
-  // In @stellar/stellar-sdk v12 the returned object has .accountId()/.sequenceNumber() methods
+  // In @stellar/stellar-sdk the returned object has .accountId()/.sequenceNumber() methods.
   const accData = await rpc.getAccount(walletPub);
 
-  const tx = new TransactionBuilder(accData, {
-    fee: MAX_FEE_STR,
-    networkPassphrase: Networks.PUBLIC,
-  }).addOperation(op).setTimeout(60).build();
+  const buildTx = (minOutUnits) => {
+    const op = new Contract(COMET_POOL).call(
+      'swap_exact_amount_in',
+      addr(tokenIn),
+      i128(amtInUnits),
+      addr(tokenOut),
+      i128(minOutUnits),
+      i128(MAX_PRICE_UNITS),
+      addr(walletPub),
+    );
+    return new TransactionBuilder(accData, {
+      fee: MAX_FEE_STR,
+      networkPassphrase: Networks.PUBLIC,
+    }).addOperation(op).setTimeout(60).build();
+  };
 
-  // Simulate to get resource estimates and auth
+  // Pass 1 — discover the real output with a negligible floor (1 unit) so the
+  // contract doesn't reject on ERR_LIMIT_OUT before we know the true amount.
+  const discoverSim = await rpc.simulateTransaction(buildTx(1));
+  if (SorobanRpc.Api.isSimulationError(discoverSim)) {
+    throw new Error('Comet discover sim error: ' + discoverSim.error);
+  }
+  const expectedOut  = Number(scValToNative(discoverSim.result.retval)[0]); // units (×1e7)
+  const minOutUnits  = Math.max(1, Math.floor(expectedOut * (1 - slippage)));
+  log(`    Expected out ${(expectedOut / 1e7).toFixed(6)} — min ${(minOutUnits / 1e7).toFixed(6)} (${(slippage * 100).toFixed(2)}% slip)`);
+
+  // Pass 2 — real tx with the slippage-protected minimum.
+  const tx  = buildTx(minOutUnits);
   const sim = await rpc.simulateTransaction(tx);
   if (SorobanRpc.Api.isSimulationError(sim)) {
     throw new Error('Comet exec sim error: ' + sim.error);
@@ -306,14 +323,13 @@ async function executeArb(rpc, horizon, opp) {
   const blndUnits   = opp.blndUnits;
   const blndAmt     = opp.blndMid;
 
-  // Conservative minima with slippage buffer
-  const minBlndOut  = Math.round(blndAmt * (1 - SLIPPAGE) * 1e7);
+  // SDEX-leg minima (Comet legs derive their own floor inside executeCometSwap)
   const minUsdcBack = opp.usdcIn * (1 - SLIPPAGE); // at worst break-even minus slippage
 
   if (opp.dir === 'A') {
     // Leg 1: Comet USDC→BLND
-    log(`  Leg 1 — Comet swap: ${opp.usdcIn} USDC → BLND (min ${(minBlndOut/1e7).toFixed(4)})`);
-    const leg1 = await executeCometSwap(rpc, USDC_TOKEN, usdcUnits, BLND_TOKEN, minBlndOut);
+    log(`  Leg 1 — Comet swap: ${opp.usdcIn} USDC → BLND`);
+    const leg1 = await executeCometSwap(rpc, USDC_TOKEN, usdcUnits, BLND_TOKEN);
     const blndToSell = leg1.amtOut ?? blndAmt * (1 - SLIPPAGE);
 
     // Leg 2: SDEX BLND→USDC
@@ -328,9 +344,8 @@ async function executeArb(rpc, horizon, opp) {
     const leg1 = await executeSdexPath(horizon, usdcAsset, opp.usdcIn, blndAsset, minBlndFromSdex, opp.sdexRecord);
 
     // Leg 2: Comet BLND→USDC
-    const minUsdcFromComet = Math.round(minUsdcBack * 1e7);
-    log(`  Leg 2 — Comet swap: ${blndAmt.toFixed(6)} BLND → USDC (min ${minUsdcBack.toFixed(4)})`);
-    const leg2 = await executeCometSwap(rpc, BLND_TOKEN, blndUnits, USDC_TOKEN, minUsdcFromComet);
+    log(`  Leg 2 — Comet swap: ${blndAmt.toFixed(6)} BLND → USDC`);
+    const leg2 = await executeCometSwap(rpc, BLND_TOKEN, blndUnits, USDC_TOKEN);
     return { leg1, leg2 };
   }
 }
@@ -413,12 +428,11 @@ async function poll(rpc, horizon) {
   if (bal.diff > 0) {
     // USDC heavy → buy BLND with rebalUsd USDC on Comet
     const blndExpected = rebalUsd / cometUsdcPerBlnd;
-    const minBlnd      = Math.round(blndExpected * (1 - SLIPPAGE) * 1e7);
     const usdcUnits    = Math.round(rebalUsd * 1e7);
-    log(`  Rebalance: USDC heavy by $${absDiff.toFixed(4)} — buying ${blndExpected.toFixed(4)} BLND with ${rebalUsd.toFixed(4)} USDC on Comet`);
+    log(`  Rebalance: USDC heavy by $${absDiff.toFixed(4)} — buying ~${blndExpected.toFixed(4)} BLND with ${rebalUsd.toFixed(4)} USDC on Comet`);
     if (EXECUTE) {
       try {
-        await executeCometSwap(rpc, USDC_TOKEN, usdcUnits, BLND_TOKEN, minBlnd);
+        await executeCometSwap(rpc, USDC_TOKEN, usdcUnits, BLND_TOKEN);
         pnl.rebalances++;
         log(`  Rebalance done (${pnl.rebalances} total).`);
       } catch (e) {
@@ -430,12 +444,11 @@ async function poll(rpc, horizon) {
   } else {
     // BLND heavy → sell rebalUsd-worth of BLND for USDC on Comet
     const blndToSell = rebalUsd / cometUsdcPerBlnd;
-    const minUsdc    = Math.round(rebalUsd * (1 - SLIPPAGE) * 1e7);
     const blndUnits  = Math.round(blndToSell * 1e7);
     log(`  Rebalance: BLND heavy by $${absDiff.toFixed(4)} — selling ${blndToSell.toFixed(4)} BLND for ~${rebalUsd.toFixed(4)} USDC on Comet`);
     if (EXECUTE) {
       try {
-        await executeCometSwap(rpc, BLND_TOKEN, blndUnits, USDC_TOKEN, minUsdc);
+        await executeCometSwap(rpc, BLND_TOKEN, blndUnits, USDC_TOKEN);
         pnl.rebalances++;
         log(`  Rebalance done (${pnl.rebalances} total).`);
       } catch (e) {
