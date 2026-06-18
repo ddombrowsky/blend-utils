@@ -215,11 +215,10 @@ async function checkOpportunity(rpc, horizon, cometUsdcPerBlnd) {
 // slippage tolerance. By sizing the floor off the real sim, slippage protection
 // guards only the gap between simulation and on-chain execution — which is its job.
 async function executeCometSwap(rpc, tokenIn, amtInUnits, tokenOut, slippage = SLIPPAGE) {
-  // Fetch real account (need actual sequence number for submission)
-  // In @stellar/stellar-sdk the returned object has .accountId()/.sequenceNumber() methods.
-  const accData = await rpc.getAccount(walletPub);
-
-  const buildTx = (minOutUnits) => {
+  // TransactionBuilder mutates the account's sequence on build(), so each tx needs
+  // its own account object. Simulation ignores the sequence, so the discovery pass
+  // uses a throwaway account; only the real (submitted) tx needs the live sequence.
+  const buildTx = (account, minOutUnits) => {
     const op = new Contract(COMET_POOL).call(
       'swap_exact_amount_in',
       addr(tokenIn),
@@ -229,7 +228,7 @@ async function executeCometSwap(rpc, tokenIn, amtInUnits, tokenOut, slippage = S
       i128(MAX_PRICE_UNITS),
       addr(walletPub),
     );
-    return new TransactionBuilder(accData, {
+    return new TransactionBuilder(account, {
       fee: MAX_FEE_STR,
       networkPassphrase: Networks.PUBLIC,
     }).addOperation(op).setTimeout(60).build();
@@ -237,7 +236,7 @@ async function executeCometSwap(rpc, tokenIn, amtInUnits, tokenOut, slippage = S
 
   // Pass 1 — discover the real output with a negligible floor (1 unit) so the
   // contract doesn't reject on ERR_LIMIT_OUT before we know the true amount.
-  const discoverSim = await rpc.simulateTransaction(buildTx(1));
+  const discoverSim = await rpc.simulateTransaction(buildTx(new Account(walletPub, '0'), 1));
   if (SorobanRpc.Api.isSimulationError(discoverSim)) {
     throw new Error('Comet discover sim error: ' + discoverSim.error);
   }
@@ -245,8 +244,10 @@ async function executeCometSwap(rpc, tokenIn, amtInUnits, tokenOut, slippage = S
   const minOutUnits  = Math.max(1, Math.floor(expectedOut * (1 - slippage)));
   log(`    Expected out ${(expectedOut / 1e7).toFixed(6)} — min ${(minOutUnits / 1e7).toFixed(6)} (${(slippage * 100).toFixed(2)}% slip)`);
 
-  // Pass 2 — real tx with the slippage-protected minimum.
-  const tx  = buildTx(minOutUnits);
+  // Pass 2 — real tx with the live sequence and the slippage-protected minimum.
+  // In @stellar/stellar-sdk the returned object has .accountId()/.sequenceNumber() methods.
+  const accData = await rpc.getAccount(walletPub);
+  const tx  = buildTx(accData, minOutUnits);
   const sim = await rpc.simulateTransaction(tx);
   if (SorobanRpc.Api.isSimulationError(sim)) {
     throw new Error('Comet exec sim error: ' + sim.error);
