@@ -33,7 +33,7 @@ while [ $good = 1 ] ; do
     stellar contract invoke \
     --id CAS3FL6TLZKDGGSISDBWGGPXT3NRR4DYTZD7YOD3HMYO6LTJUVGRVEAM \
     --source-account xbull \
-    --network mainnet --fee 10000000 -- \
+    --network mainnet --inclusion-fee 10000000 -- \
     swap_exact_amount_in \
     --token_in $BLND_CONTRACT \
     --token_amount_in $BLND \

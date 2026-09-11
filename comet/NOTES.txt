@@ -22,6 +22,12 @@ soroban contract invoke \
 
 this swaps 5 USDC to BLND
 
+## Spot price:
+
+80/20 pool =>
+
+spot = 4*bal_usdc / bal_blnd
+
 ## Swap Scripts
 
 usage:
