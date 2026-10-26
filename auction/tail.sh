@@ -2,7 +2,7 @@
 
 F=$1
 
-file5=`/bin/ls -1t data-v2/logs/bidder* |head -1`
+file5=`/bin/ls -1t data-v3/logs/bidder* |head -1`
 
 f1() {
     [ -z "$1" ] && return
@@ -26,4 +26,4 @@ if [ "$1" = "2" ] ; then
 fi
 
 echo '= trades ='
-sqlite3 data-v2/auctioneer.sqlite  "select datetime(timestamp, 'unixepoch', 'localtime') , substr(pool_id,1,7), tx_hash, auction_type, bid_total, est_profit from filled_auctions;" | awk '{print "V2 : " $0}'
+sqlite3 data-v3/auctioneer.sqlite  "select datetime(timestamp, 'unixepoch', 'localtime') , substr(pool_id,1,7), tx_hash, auction_type, bid_total, est_profit from filled_auctions;" | awk '{print "V2 : " $0}'
