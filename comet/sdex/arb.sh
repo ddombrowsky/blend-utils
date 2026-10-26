@@ -4,8 +4,6 @@
 # run example:
 #    timeout -s SIGINT 2h ./arb.sh --execute
 
-set -x
-
 #export SECRET_KEY=$(stellar keys show claudio)
 export SECRET_KEY=$(stellar keys show xbull)
 
