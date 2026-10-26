@@ -6,7 +6,8 @@
 
 set -x
 
-export SECRET_KEY=$(stellar keys show claudio)
+#export SECRET_KEY=$(stellar keys show claudio)
+export SECRET_KEY=$(stellar keys show xbull)
 
 EX=
 [ "$1" = "--execute" ] && EX=--execute

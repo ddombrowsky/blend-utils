@@ -31,7 +31,7 @@ TOKSTR=BLND
 while [ $good = 1 ] ; do
     # NOTE: error #22 = bad limit price
     stellar contract invoke \
-    --id CAS3FL6TLZKDGGSISDBWGGPXT3NRR4DYTZD7YOD3HMYO6LTJUVGRVEAM \
+    --id CASYAKK3SHDN6S2E6IUOBVRXT3KKPVQCVQO4GNBDTVE6XZQQMW4UMIHE \
     --source-account xbull \
     --network mainnet --inclusion-fee 10000000 -- \
     swap_exact_amount_in \
