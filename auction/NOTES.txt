@@ -52,8 +52,7 @@ issues.
 
 NOTE: The consensus node configurations can be found from stellarbeat.io.
 For example, see 
-https://stellarbeat.io/nodes/GCGB2S2KGYARPVIA37HYZXVRM2YZUEXA6S33ZU5BUDC6THSB62LZSTYH?center=1
-and click "stellar core config".  This will show the URLs and the public key.
+https://github.com/stellar/quickstart/blob/main/pubnet/stellar-rpc/etc/stellar-captive-core.cfg
 
 https://developers.stellar.org/docs/data/rpc/admin-guide#docker-image
 
