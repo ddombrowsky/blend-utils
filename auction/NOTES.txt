@@ -62,3 +62,25 @@ https://dev.to/row-bear/rpc-for-soroban-mainnet-36eo
 
 docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' soroban1
 
+
+## creating BLNT v3 interest auctions
+
+    ~/work/script3/blend/blend-utils/auction/new-interest-v3.sh
+
+Calls `new_auction` (auction_type 2 = interest auction, percent 100) on the
+BLNT v3 pool CACSQWCMKG45TUHCQ3LXHOB7YEEJH4W376ZHQPXH2IZ3TE4NJHFZMCY7 on
+mainnet, signed by the `xbull` key, with a lot of 3 reserve assets (v3 lots
+max out at 4).  Output goes to auction.log.
+
+If it fails with Error #1228 (not enough interest accrued yet), it prints
+each lot asset's accrued backstop_credit.  A single backstop tier's share of
+the lot has to be worth at least $20 before an auction can be created.
+Other errors: #1200 = bad request (wrong user / percent != 100),
+#1227 = invalid interest auction.
+
+Run it in a loop until an auction gets created:
+
+    ( while true ; do date ; ./new-interest-v3.sh ; sleep 300 ; done ) 2>&1 | tee log
+
+new-interest.sh is the Blend v2 equivalent (ybx v2 and other v2 pools, lots
+of up to 5 assets).
