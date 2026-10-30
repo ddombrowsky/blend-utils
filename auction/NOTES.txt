@@ -82,5 +82,24 @@ Run it in a loop until an auction gets created:
 
     ( while true ; do date ; ./new-interest-v3.sh ; sleep 300 ; done ) 2>&1 | tee log
 
+### how the backstop tier is chosen (lower tiers are not starved)
+
+From blnt-contracts-v3/pool/src/auctions/tier_interest.rs:
+
+* Each auction creation splits newly accrued backstop_credit across the three
+  tiers, weighted by tier value * take_rate_weight, into a per-asset running
+  balance (first_loss / second_loss / third_loss).  A tier's balance is only
+  reduced when that tier's auction is filled, so a skipped tier keeps
+  accumulating until it reaches $20.
+* Tier selection is round-robin: select_interest_tier starts at a cursor and
+  picks the first tier with >= $20 (MIN_AUCTION_LOT_VALUE_USDC), wrapping
+  around.  After an auction the cursor moves to the next tier.  So a small
+  tier gets checked first every round until it crosses $20.
+* Smaller tiers auction less often, in proportion to their share (a tier
+  with 10% of the take rate takes ~10x as long to reach $20).
+* Tiers with backstop value 0 are skipped and get no allocation.
+* The $20 check sums a tier's balance across only the assets in --lot, so
+  include every asset with accrued credit.
+
 new-interest.sh is the Blend v2 equivalent (ybx v2 and other v2 pools, lots
 of up to 5 assets).
