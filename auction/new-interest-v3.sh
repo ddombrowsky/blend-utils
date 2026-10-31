@@ -2,6 +2,7 @@
 
 # https://github.com/BLNT-Protocol/blnt-contracts-v3/blob/main/pool/src/errors.rs
 # error 1200 = bad request (wrong user / percent != 100)
+# error 1212 = auction in progress (the last interest auction isn't filled yet)
 # error 1227 = invalid interest auction (v3 lots have max of 4 assets)
 # error 1228 = no interest auction capacity (not enough interest accrued yet)
 
