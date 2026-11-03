@@ -22,8 +22,8 @@ async function go() {
   const server = new Stellar.Horizon.Server('https://horizon.stellar.org');
   let seckey = Stellar.Keypair.fromSecret(privKey);
   let blnd = new Stellar.Asset(
-    'BLND',
-    'GDJEHTBE6ZHUXSWFI642DCGLUOECLHPF3KSXHPXTSTJ7E3JF6MQ5EZYY'
+    'BLNT',
+    'GAP2ACGH3O6TRFAERGM4USJ6XWU3U2BFIK224JPV6NI3CUNEEEGTBTFB'
   );
   let usdc = new Stellar.Asset(
     'USDC',

@@ -5,44 +5,59 @@ soroban network add public \
     --rpc-url https://soroban-rpc.creit.tech \
     --network-passphrase 'Public Global Stellar Network ; September 2015'
 
-comet swaps:
+comet swaps (BLNT/USDC Comet LP, BlntUsdc tier of the BLNT-v3 backstop):
 
 soroban contract invoke \
-    --id CAS3FL6TLZKDGGSISDBWGGPXT3NRR4DYTZD7YOD3HMYO6LTJUVGRVEAM \
+    --id CDQMIKIHKA5UY3FQJ2UDTLNX3GOPD3GPNZWSPTOBVOHEUMQJQXOPC7Y3 \
     --source-account xbull \
     --network public \
     --fee 10000000 \
     -- swap_exact_amount_in \
     --token_in "CCW67TSZV3SSS2HXMBQ5JFGCKJNXKZM7UQUWUZPUTHXSTZLEO7SJMI75" \
     --token_amount_in 50000000 \
-    --token_out "CD25MNVTZDL4Y3XBCPCJXGXATV5WUHHOWMYFF4YBEGU5FCPGMYTVG5JY" \
+    --token_out "CCBNWP5L7ZSXA3DBWCMFAVKFVRW3ZHWO7B5J557W42O64DDZNPJP7VDS" \
     --min_amount_out 1 \
     --max_price 100000000000 \
     --user xbull
 
-this swaps 5 USDC to BLND
+this swaps 5 USDC to BLNT
 
 ## Spot price:
 
-80/20 pool =>
+80/20 pool (80 BLNT / 20 USDC) =>
 
-spot = 4*bal_usdc / bal_blnd
+spot = 4*bal_usdc / bal_blnt
 
 ## Swap Scripts
 
 usage:
 
 ```
-./swap-usdc.sh 5 0.069
+./swap-usdc.sh 5 0.0070
 ```
 
-Attempts to swap 5 USDC to BLND for less than 0.069 USDC per BLND, and then
+Attempts to swap 5 USDC to BLNT for less than 0.0070 USDC per BLNT, and then
 swaps it back on the SDEX attempting to make a profit.
 
 
 ```
-./swap-blnd.sh 200 16.1
+./swap-blnd.sh 1500 152
 ```
 
-Attempts to swap 200 BLND to USDC for less than 16.1 BLND per USDC, and then
+Attempts to swap 1500 BLNT to USDC for less than 152 BLNT per USDC, and then
 swaps it back on the SDEX attempting to make a profit.
+
+(swap-blnd.sh keeps its old name but now swaps BLNT.)
+
+Addresses (mainnet):
+    BLNT/USDC Comet LP  CDQMIKIHKA5UY3FQJ2UDTLNX3GOPD3GPNZWSPTOBVOHEUMQJQXOPC7Y3
+    BLNT token (SAC)    CCBNWP5L7ZSXA3DBWCMFAVKFVRW3ZHWO7B5J557W42O64DDZNPJP7VDS
+    BLNT issuer         GAP2ACGH3O6TRFAERGM4USJ6XWU3U2BFIK224JPV6NI3CUNEEEGTBTFB
+    USDC token (SAC)    CCW67TSZV3SSS2HXMBQ5JFGCKJNXKZM7UQUWUZPUTHXSTZLEO7SJMI75
+
+BLNT was ~0.0067 USDC on 2026-11-03.  Check the current spot price with:
+
+    stellar contract invoke --id CDQMIKIHKA5UY3FQJ2UDTLNX3GOPD3GPNZWSPTOBVOHEUMQJQXOPC7Y3 \
+        --source-account xbull --network mainnet --send no -- get_spot_price \
+        --token_in CCW67TSZV3SSS2HXMBQ5JFGCKJNXKZM7UQUWUZPUTHXSTZLEO7SJMI75 \
+        --token_out CCBNWP5L7ZSXA3DBWCMFAVKFVRW3ZHWO7B5J557W42O64DDZNPJP7VDS

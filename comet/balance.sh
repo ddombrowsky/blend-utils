@@ -1,17 +1,14 @@
-#!/bin/sh
+#!/bin/bash
 
-PUBKEY=$1
-
-if [ "$PUBKEY" = "" ] ; then
-    PUBKEY=GAVG3ODZ4SAVK2WJL3F3RT265RL7P6QNOMA6NL3XDAREKSX3OWWMXF4R
-fi
+. ./.env
 
 echo $PUBKEY
 
-soroban contract invoke \
-    --id CAS3FL6TLZKDGGSISDBWGGPXT3NRR4DYTZD7YOD3HMYO6LTJUVGRVEAM \
+stellar contract invoke \
+    --send=no \
+    --id CDQMIKIHKA5UY3FQJ2UDTLNX3GOPD3GPNZWSPTOBVOHEUMQJQXOPC7Y3 \
     --source-account xbull \
-    --network public -- \
+    --network mainnet -- \
     balance \
     --id $PUBKEY | tee out
 
