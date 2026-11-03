@@ -52,16 +52,16 @@ const SLIPPAGE            = 0.005; // 0.5% slippage tolerance on each leg
 // ── Addresses ─────────────────────────────────────────────────────────────────
 const COMET_POOL  = 'CDQMIKIHKA5UY3FQJ2UDTLNX3GOPD3GPNZWSPTOBVOHEUMQJQXOPC7Y3';
 // BLNT GAP2ACGH3O6TRFAERGM4USJ6XWU3U2BFIK224JPV6NI3CUNEEEGTBTFB
-const BLND_TOKEN  = 'CCBNWP5L7ZSXA3DBWCMFAVKFVRW3ZHWO7B5J557W42O64DDZNPJP7VDS';
+const BLNT_TOKEN  = 'CCBNWP5L7ZSXA3DBWCMFAVKFVRW3ZHWO7B5J557W42O64DDZNPJP7VDS';
 const USDC_TOKEN  = 'CCW67TSZV3SSS2HXMBQ5JFGCKJNXKZM7UQUWUZPUTHXSTZLEO7SJMI75';
-const BLND_ISSUER = 'GAP2ACGH3O6TRFAERGM4USJ6XWU3U2BFIK224JPV6NI3CUNEEEGTBTFB';
+const BLNT_ISSUER = 'GAP2ACGH3O6TRFAERGM4USJ6XWU3U2BFIK224JPV6NI3CUNEEEGTBTFB';
 const USDC_ISSUER = 'GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN';
 
 const HORIZON_URL = 'https://horizon.stellar.org';
 const RPC_URL     = 'https://soroban-rpc.creit.tech';
 
-const blndAssetName = 'BLNT'
-const blndAsset = new Asset(blndAssetName, BLND_ISSUER);
+const blntAssetName = 'BLNT'
+const blntAsset = new Asset(blntAssetName, BLNT_ISSUER);
 const usdcAsset = new Asset('USDC', USDC_ISSUER);
 
 // Very large max_price for Comet swaps (no effective upper bound on price)
@@ -118,7 +118,7 @@ async function cometSpotPrice(rpc, tokenIn, tokenOut) {
 // ── Wallet balance helpers ────────────────────────────────────────────────────
 
 // Query a Soroban token's balance for walletPub.
-// USDC_TOKEN and BLND_TOKEN are Stellar Asset Contracts (SACs), so their
+// USDC_TOKEN and BLNT_TOKEN are Stellar Asset Contracts (SACs), so their
 // balance() returns the same value as the classic Stellar asset balance.
 async function tokenBalance(rpc, tokenContract) {
   const op      = new Contract(tokenContract).call('balance', addr(walletPub));
@@ -134,14 +134,14 @@ async function tokenBalance(rpc, tokenContract) {
 // Returns current wallet balances and the USD-value imbalance.
 // diff > 0 means wallet is USDC-heavy; diff < 0 means BLNT-heavy.
 async function getWalletBalances(rpc, cometUsdcPerBlnd) {
-  const [usdc, blnd] = await Promise.all([
+  const [usdc, blnt] = await Promise.all([
     tokenBalance(rpc, USDC_TOKEN),
-    tokenBalance(rpc, BLND_TOKEN),
+    tokenBalance(rpc, BLNT_TOKEN),
   ]);
-  const blndUsd = blnd * cometUsdcPerBlnd;
-  const total   = usdc + blndUsd;
-  const diff    = usdc - blndUsd;
-  return { usdc, blnd, blndUsd, total, diff };
+  const blntUsd = blnt * cometUsdcPerBlnd;
+  const total   = usdc + blntUsd;
+  const diff    = usdc - blntUsd;
+  return { usdc, blnt, blntUsd, total, diff };
 }
 
 // ── Opportunity detection ─────────────────────────────────────────────────────
@@ -154,11 +154,11 @@ async function checkOpportunity(rpc, horizon, cometUsdcPerBlnd) {
   const results = [];
 
   // Fetch the reverse Comet price, SDEX paths, and live XLM/USDC price concurrently
-  const blndEquiv = USDC_TRADE / cometUsdcPerBlnd; // ~BLNT we'd get buying on Comet
+  const blntEquiv = USDC_TRADE / cometUsdcPerBlnd; // ~BLNT we'd get buying on Comet
   const [cometBlndPerUsdc, sellPath, buyPath, xlmPath] = await Promise.all([
-    cometSpotPrice(rpc, BLND_TOKEN, USDC_TOKEN),
-    horizon.strictSendPaths(blndAsset, blndEquiv.toFixed(7), [usdcAsset]).call(),
-    horizon.strictSendPaths(usdcAsset, USDC_TRADE.toFixed(7), [blndAsset]).call(),
+    cometSpotPrice(rpc, BLNT_TOKEN, USDC_TOKEN),
+    horizon.strictSendPaths(blntAsset, blntEquiv.toFixed(7), [usdcAsset]).call(),
+    horizon.strictSendPaths(usdcAsset, USDC_TRADE.toFixed(7), [blntAsset]).call(),
     horizon.strictSendPaths(Asset.native(), '1', [usdcAsset]).call(),
   ]);
 
@@ -168,19 +168,19 @@ async function checkOpportunity(rpc, horizon, cometUsdcPerBlnd) {
 
   // ── Direction A: Comet USDC→BLNT, then SDEX BLNT→USDC ───────────────────
   if (sellPath.records.length > 0) {
-    const sdexUsdcPerBlnd = parseFloat(sellPath.records[0].destination_amount) / blndEquiv;
+    const sdexUsdcPerBlnd = parseFloat(sellPath.records[0].destination_amount) / blntEquiv;
     // Profit: sell BLNT on SDEX at sdexUsdcPerBlnd, bought at cometUsdcPerBlnd
-    const profit       = (sdexUsdcPerBlnd - cometUsdcPerBlnd) * blndEquiv;
+    const profit       = (sdexUsdcPerBlnd - cometUsdcPerBlnd) * blntEquiv;
     const profitPct    = (sdexUsdcPerBlnd - cometUsdcPerBlnd) / cometUsdcPerBlnd * 100;
     const netProfit    = profit - txCostUsd;          // after XLM network cost
     const netProfitPct = netProfit / USDC_TRADE * 100;
-    const blndUnits = Math.round(blndEquiv * 1e7);
+    const blntUnits = Math.round(blntEquiv * 1e7);
     results.push({
       dir: 'A',
       label: 'Comet(USDC→BLNT) → SDEX(BLNT→USDC)',
       usdcIn: USDC_TRADE,
-      blndMid: blndEquiv,
-      blndUnits,
+      blntMid: blntEquiv,
+      blntUnits,
       cometPrice: cometUsdcPerBlnd,
       sdexPrice: sdexUsdcPerBlnd,
       usdcOut: USDC_TRADE + profit,
@@ -197,22 +197,22 @@ async function checkOpportunity(rpc, horizon, cometUsdcPerBlnd) {
   // ── Direction B: SDEX USDC→BLNT, then Comet BLNT→USDC ───────────────────
   // How much BLNT does SDEX give for USDC_TRADE USDC?
   if (buyPath.records.length > 0) {
-    const blndFromSdex    = parseFloat(buyPath.records[0].destination_amount);
-    const sdexUsdcPerBlnd = USDC_TRADE / blndFromSdex;   // effective USDC paid per BLNT
+    const blntFromSdex    = parseFloat(buyPath.records[0].destination_amount);
+    const sdexUsdcPerBlnd = USDC_TRADE / blntFromSdex;   // effective USDC paid per BLNT
     // cometBlndPerUsdc = BLNT cost per USDC on Comet → invert to get USDC per BLNT
     const cometUsdcPerBlndSell = 1 / cometBlndPerUsdc;
     // Profit: sell BLNT on Comet at cometUsdcPerBlndSell, bought at sdexUsdcPerBlnd
-    const profit       = (cometUsdcPerBlndSell - sdexUsdcPerBlnd) * blndFromSdex;
+    const profit       = (cometUsdcPerBlndSell - sdexUsdcPerBlnd) * blntFromSdex;
     const profitPct    = (cometUsdcPerBlndSell - sdexUsdcPerBlnd) / sdexUsdcPerBlnd * 100;
     const netProfit    = profit - txCostUsd;          // after XLM network cost
     const netProfitPct = netProfit / USDC_TRADE * 100;
-    const blndUnits = Math.round(blndFromSdex * 1e7);
+    const blntUnits = Math.round(blntFromSdex * 1e7);
     results.push({
       dir: 'B',
       label: 'SDEX(USDC→BLNT) → Comet(BLNT→USDC)',
       usdcIn: USDC_TRADE,
-      blndMid: blndFromSdex,
-      blndUnits,
+      blntMid: blntFromSdex,
+      blntUnits,
       cometPrice: cometUsdcPerBlndSell,
       sdexPrice: sdexUsdcPerBlnd,
       usdcOut: USDC_TRADE + profit,
@@ -357,8 +357,8 @@ async function executeSdexPath(horizon, sendAsset, sendAmt, destAsset, destMin, 
 // ── Execute arbitrage ─────────────────────────────────────────────────────────
 async function executeArb(rpc, horizon, opp) {
   const usdcUnits   = Math.round(opp.usdcIn * 1e7);
-  const blndUnits   = opp.blndUnits;
-  const blndAmt     = opp.blndMid;
+  const blntUnits   = opp.blntUnits;
+  const blntAmt     = opp.blntMid;
 
   // SDEX-leg minima (Comet legs derive their own floor inside executeCometSwap)
   const minUsdcBack = opp.usdcIn * (1 - SLIPPAGE); // at worst break-even minus slippage
@@ -366,23 +366,23 @@ async function executeArb(rpc, horizon, opp) {
   if (opp.dir === 'A') {
     // Leg 1: Comet USDC→BLNT
     log(`  Leg 1 — Comet swap: ${opp.usdcIn} USDC → BLNT`);
-    const leg1 = await executeCometSwap(rpc, USDC_TOKEN, usdcUnits, BLND_TOKEN);
-    const blndToSell = leg1.amtOut ?? blndAmt * (1 - SLIPPAGE);
+    const leg1 = await executeCometSwap(rpc, USDC_TOKEN, usdcUnits, BLNT_TOKEN);
+    const blntToSell = leg1.amtOut ?? blntAmt * (1 - SLIPPAGE);
 
     // Leg 2: SDEX BLNT→USDC
-    log(`  Leg 2 — SDEX path: ${blndToSell.toFixed(6)} BLNT → USDC (min ${minUsdcBack.toFixed(4)})`);
-    const leg2 = await executeSdexPath(horizon, blndAsset, blndToSell, usdcAsset, minUsdcBack, opp.sdexRecord);
+    log(`  Leg 2 — SDEX path: ${blntToSell.toFixed(6)} BLNT → USDC (min ${minUsdcBack.toFixed(4)})`);
+    const leg2 = await executeSdexPath(horizon, blntAsset, blntToSell, usdcAsset, minUsdcBack, opp.sdexRecord);
     return { leg1, leg2 };
 
   } else {
     // Leg 1: SDEX USDC→BLNT
-    const minBlndFromSdex = blndAmt * (1 - SLIPPAGE);
+    const minBlndFromSdex = blntAmt * (1 - SLIPPAGE);
     log(`  Leg 1 — SDEX path: ${opp.usdcIn} USDC → BLNT (min ${minBlndFromSdex.toFixed(4)})`);
-    const leg1 = await executeSdexPath(horizon, usdcAsset, opp.usdcIn, blndAsset, minBlndFromSdex, opp.sdexRecord);
+    const leg1 = await executeSdexPath(horizon, usdcAsset, opp.usdcIn, blntAsset, minBlndFromSdex, opp.sdexRecord);
 
     // Leg 2: Comet BLNT→USDC
-    log(`  Leg 2 — Comet swap: ${blndAmt.toFixed(6)} BLNT → USDC`);
-    const leg2 = await executeCometSwap(rpc, BLND_TOKEN, blndUnits, USDC_TOKEN);
+    log(`  Leg 2 — Comet swap: ${blntAmt.toFixed(6)} BLNT → USDC`);
+    const leg2 = await executeCometSwap(rpc, BLNT_TOKEN, blntUnits, USDC_TOKEN);
     return { leg1, leg2 };
   }
 }
@@ -398,7 +398,7 @@ async function poll(rpc, horizon) {
   // ── Fetch Comet spot price first — shared by arb check AND balance valuation ──
   let cometUsdcPerBlnd;
   try {
-    cometUsdcPerBlnd = await cometSpotPrice(rpc, USDC_TOKEN, BLND_TOKEN);
+    cometUsdcPerBlnd = await cometSpotPrice(rpc, USDC_TOKEN, BLNT_TOKEN);
   } catch (e) {
     log(`  Price fetch failed: ${e.message}`);
     return;
@@ -421,7 +421,7 @@ async function poll(rpc, horizon) {
     const heavy   = absDiff <= REBALANCE_THRESHOLD
       ? 'balanced ✓'
       : bal.diff > 0 ? `USDC heavy  Δ$${absDiff.toFixed(4)}` : `BLNT heavy  Δ$${absDiff.toFixed(4)}`;
-    log(`  Wallet: ${bal.usdc.toFixed(4)} USDC | ${bal.blnd.toFixed(4)} BLNT (~$${bal.blndUsd.toFixed(4)}) | total $${bal.total.toFixed(4)} | ${heavy}`);
+    log(`  Wallet: ${bal.usdc.toFixed(4)} USDC | ${bal.blnt.toFixed(4)} BLNT (~$${bal.blntUsd.toFixed(4)}) | total $${bal.total.toFixed(4)} | ${heavy}`);
   }
 
   // ── 2. Arbitrage check ────────────────────────────────────────────────────
@@ -430,7 +430,7 @@ async function poll(rpc, horizon) {
     const netSign = opp.netProfitPct >= 0 ? '+' : '';
     log(`  Arb  [${opp.dir}] ${opp.label}`);
     log(`    Comet ${opp.cometPrice.toFixed(6)} USDC/BLNT | SDEX ${opp.sdexPrice.toFixed(6)} | spread ${sign}${opp.profitPct.toFixed(3)}%`);
-    log(`    ${opp.usdcIn.toFixed(4)} USDC → ${opp.blndMid.toFixed(4)} BLNT → ${fmtUsdc(opp.usdcOut)} USDC  (gross ${sign}${opp.profit.toFixed(6)} USDC)`);
+    log(`    ${opp.usdcIn.toFixed(4)} USDC → ${opp.blntMid.toFixed(4)} BLNT → ${fmtUsdc(opp.usdcOut)} USDC  (gross ${sign}${opp.profit.toFixed(6)} USDC)`);
     log(`    tx cost -$${opp.txCostUsd.toFixed(6)} (${XLM_COST} XLM) → NET ${netSign}${opp.netProfit.toFixed(6)} USDC (${netSign}${opp.netProfitPct.toFixed(3)}%)`);
 
     if (opp.netProfitPct >= MIN_PROFIT_PCT) {
@@ -467,35 +467,35 @@ async function poll(rpc, horizon) {
 
   if (bal.diff > 0) {
     // USDC heavy → buy BLNT with rebalUsd USDC on Comet
-    const blndExpected = rebalUsd / cometUsdcPerBlnd;
+    const blntExpected = rebalUsd / cometUsdcPerBlnd;
     const usdcUnits    = Math.round(rebalUsd * 1e7);
-    log(`  Rebalance: USDC heavy by $${absDiff.toFixed(4)} — buying ~${blndExpected.toFixed(4)} BLNT with ${rebalUsd.toFixed(4)} USDC on Comet`);
+    log(`  Rebalance: USDC heavy by $${absDiff.toFixed(4)} — buying ~${blntExpected.toFixed(4)} BLNT with ${rebalUsd.toFixed(4)} USDC on Comet`);
     if (EXECUTE) {
       try {
-        await executeCometSwap(rpc, USDC_TOKEN, usdcUnits, BLND_TOKEN);
+        await executeCometSwap(rpc, USDC_TOKEN, usdcUnits, BLNT_TOKEN);
         pnl.rebalances++;
         log(`  Rebalance done (${pnl.rebalances} total).`);
       } catch (e) {
         log(`  Rebalance error: ${e.message}`);
       }
     } else {
-      log(`  [DRY-RUN] Would swap ${rebalUsd.toFixed(4)} USDC → ~${blndExpected.toFixed(4)} BLNT`);
+      log(`  [DRY-RUN] Would swap ${rebalUsd.toFixed(4)} USDC → ~${blntExpected.toFixed(4)} BLNT`);
     }
   } else {
     // BLNT heavy → sell rebalUsd-worth of BLNT for USDC on Comet
-    const blndToSell = rebalUsd / cometUsdcPerBlnd;
-    const blndUnits  = Math.round(blndToSell * 1e7);
-    log(`  Rebalance: BLNT heavy by $${absDiff.toFixed(4)} — selling ${blndToSell.toFixed(4)} BLNT for ~${rebalUsd.toFixed(4)} USDC on Comet`);
+    const blntToSell = rebalUsd / cometUsdcPerBlnd;
+    const blntUnits  = Math.round(blntToSell * 1e7);
+    log(`  Rebalance: BLNT heavy by $${absDiff.toFixed(4)} — selling ${blntToSell.toFixed(4)} BLNT for ~${rebalUsd.toFixed(4)} USDC on Comet`);
     if (EXECUTE) {
       try {
-        await executeCometSwap(rpc, BLND_TOKEN, blndUnits, USDC_TOKEN);
+        await executeCometSwap(rpc, BLNT_TOKEN, blntUnits, USDC_TOKEN);
         pnl.rebalances++;
         log(`  Rebalance done (${pnl.rebalances} total).`);
       } catch (e) {
         log(`  Rebalance error: ${e.message}`);
       }
     } else {
-      log(`  [DRY-RUN] Would swap ${blndToSell.toFixed(4)} BLNT → ~$${rebalUsd.toFixed(4)} USDC`);
+      log(`  [DRY-RUN] Would swap ${blntToSell.toFixed(4)} BLNT → ~$${rebalUsd.toFixed(4)} USDC`);
     }
   }
 }
