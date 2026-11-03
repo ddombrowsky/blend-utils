@@ -1,11 +1,11 @@
 BLNT v3 pool deployment
 =======================
 
-Goal: a BLNT v3 pool modeled on the YieldBlox v2 pool.
+Instructions on how to deploy a BLNT v3 pool.
 
 Source of truth for the v3 interface:
-    ~/work/script3/blend/blnt-contracts-v3/docs/V2_V3_PUBLIC_API.md
-    ~/work/script3/blend/blnt-contracts-v3/docs/V3_SYSTEM_SPEC.md
+    blnt-contracts-v3/docs/V2_V3_PUBLIC_API.md
+    blnt-contracts-v3/docs/V3_SYSTEM_SPEC.md
 
 Older (v1/v2) references, still useful for the general flow:
     https://docs.blend.capital/pool-creators/tutorial-setting-up-a-pool
@@ -13,13 +13,13 @@ Older (v1/v2) references, still useful for the general flow:
     https://raw.githubusercontent.com/Creit-Tech/SorobanHub-app/refs/heads/main/templates/project-views/blend/launch-pool.json
 
 All numbers are 7-decimal fixed point (20% = 2000000, $5 = 50000000).
-All commands below are mainnet, signed with the `xbull` key.  Add
-`--send no` to any of them to simulate first.
+All commands below are mainnet.  Add `--send no` to any of them to
+simulate first.
 
-    U=GDJSH2NU2WF6J4P5DL4522DUCABWSTZOKFQ7BHBCFYQ3QKC6FRYWP6OL   # xbull = admin
+    U=G...
     FACTORY=CAKLFWAHB2RIYRBSPUL6EH43AIQ5ILBEM7HTMWYSJRL7PHZQ676KMCV5
     BACKSTOP=CAHCUKBPTW5DR5RNXOHCTJD5U76A6EEZXYZAQFRQEEQRXQ3CRUZ6Z3MO
-    inv() { stellar contract invoke --source-account xbull \
+    inv() { stellar contract invoke --source-account alice \
               --network mainnet --fee 10000000 --id "$@"; }
 
 (other BLNT addresses are in ADDRESSES-BLNT.md)
@@ -48,28 +48,65 @@ Read them with:
 0. Oracle
 ---------
 
-The oracle is fixed at deploy time (update_pool can't change it), so pick
-it first.
+DECISION: deploy our own oracle aggregator.  Base USDC; every other asset
+priced by Reflector's Stellar DEX feed; no pinned (base-like) assets.
+Script: oracle/deploy-aggregator.sh (deploy, add-oracle, add-assets,
+check).  Then:
 
-The two existing oracles do NOT cover the same assets:
+    ORACLE=<id printed by `oracle/deploy-aggregator.sh deploy`>
 
-    CD74A3C5...MXXR  (ybx)   base USDC.  Prices all 8 ybx reserves.
-                             USDC, USDGLO, PYUSD are pinned at 1.0.
-    CCVTVW2C...POATS (BLNT)  base USD.  Prices ONLY XLM, USDC, EURC
-                             (see `assets`).  lastprice errors for AQUA,
-                             USDGLO, USTRY, CETES, PYUSD.
+The oracle is fixed at deploy time (update_pool can't change it), so it
+has to exist before step 1.
 
-Options:
-    a. use the ybx oracle as-is (depends on its operator)
-    b. deploy our own `oracle-aggregator` (~/work/script3/blend/oracle-aggregator)
-       covering the extra assets
-    c. launch with XLM/USDC/EURC only on the BLNT oracle
+Why not reuse an existing one (checked 2026-11-03):
 
-Check coverage of a candidate oracle:
+    CD74A3C5...MXXR  ybx aggregator
+        source: Reflector CALI2BYU... (Stellar DEX feed, base USDC)
+        assets: XLM, AQUA (max_dev 0), EURC, USTRY, CETES (max_dev 10)
+        base USDC; USDGLO and PYUSD added as base assets (pinned at 1.0)
+        max_age 900
+        NO USDT0: lastprice fails with Error(Contract, #104) (asset not
+        configured).  Only ybx's admin can add_asset, and assets can never
+        be removed or edited.
+    CCVTVW2C...POATS BLNT aggregator (used by the BLNT v3 pool)
+        source: Reflector CAFJZQWS... (exchange/CEX feed, base USD)
+        assets: XLM -> "XLM" (max_dev 60), USDC -> "USDC" (20),
+                EURC -> "EURC" (20).  Nothing else.
+
+Both are the stock blend-capital/oracle-aggregator v2.0.0 release:
+    ybx   source_repo github:yieldblox/oracle-aggregator (fork), wasm
+          sha256 8cf43882ff2e6757bef1900973ab26efb1b42b832a640a320a9b881fa501cf76
+          = release v2.0.0_oracle-aggregator_cli22.0.1 of the fork
+    BLNT  source_repo github:blend-capital/oracle-aggregator, wasm
+          sha256 41df04894bf2d8291492326f7a6ab9c90a90cc9828e31990ce8aeeab42680bfd
+          = release v2.0.0_oracle-aggregator_cli22.0.1
+    Same code, only the embedded repo name differs.  The local clone
+    (~/work/script3/blend/oracle-aggregator) has v1 checked out on main;
+    the deployed interface is tag v2.0.0 (`git show v2.0.0:README.md`).
+
+Reflector feeds (both 14 decimals, 300s resolution):
+    CALI2BYU2JE6WVRUFYTS6MSBNEHGJ35P4AVCZYF3B6QOE3QKOB2PLE6M  Stellar DEX
+        base USDC.  Has XLM, EURC, AQUA, USDGLO, USTRY, CETES, PYUSD and
+        USDT0 (CBSJZEIO5C7KC2SF3MKSNXXJSW5G3VTNBX4ATMKUI3B2MR4JKM4R26YF,
+        issuer GATISXX6BZ6NC7IKQBY37CJD4SOZL3CYZJWXEDG6JVIY4WBS6KXJHN6Q,
+        ~0.9996 USDC).
+    CAFJZQWSED6YAWZU3GWRTOCNPPCGBN32L7QV43XX5LZLFTK6JLN34DLN  exchanges
+        base USD.  BTC ETH USDT XRP SOL USDC ADA AVAX DOT MATIC LINK DAI
+        ATOM XLM UNI EURC.  Generic "USDT", not the Stellar USDT0 token.
+
+Pointing the pool straight at Reflector (no aggregator) was rejected: 14
+decimals means min_collateral would be 5e14 for $5, no max_dev or max_age
+checks, and the v3 auction math wasn't checked against 14 decimals.
+
+What the v3 pool needs from an oracle (pool/src/pool/pool.rs): SEP-40
+decimals() and lastprice(Asset::Stellar); price > 0 and timestamp less
+than 24h old, else InvalidPrice and every action touching that asset
+fails.  min_collateral and the $20 interest-auction minimum are in the
+oracle's base (USDC here).
+
+Check coverage of any oracle:
     inv $ORACLE --send no -- assets
     inv $ORACLE --send no -- lastprice --asset '{"Stellar":"<asset>"}'
-
-    ORACLE=<chosen oracle>
 
 
 1. Deploy the pool
@@ -125,10 +162,22 @@ ReserveConfig has two fields that v1 didn't: `enabled` and `supply_cap`
     inv $POOL -- queue_set_reserve --asset $ASSET --metadata '<json>'
     inv $POOL -- set_reserve --asset $ASSET          # returns res_index
 
+c_factor / l_factor:
+    effective collateral = value * c_factor
+    effective liability  = value / l_factor
+    health factor = effective collateral / effective liabilities, >= 1.0
+    max borrow = collateral * c * l, so max LTV = c * l
+    (XLM c 0.75 vs EURC l 0.90 -> 67.5%; USDC vs USDC 0.95/0.95 -> ~90%)
+    c_factor 0 = can be supplied for interest but isn't collateral.
+    Liquidation only below HF 1.0; a partial liquidation must leave the
+    user between 1.03 and 1.15 (pool/src/auctions/user_liquidation_auction.rs).
+
 Reserve configs for the new pool.  Based on the ybx v2 pool, with two
 changes: c_factor = l_factor on every asset (ybx v2 had c_factor 0 on
-EURC, AQUA, USDGLO, USTRY, CETES), and USDT0 added.  `index` must match
-the order reserves are added, starting at 0.
+EURC, AQUA, USDGLO, USTRY, CETES), and USDT0 added.  AQUA, USTRY and
+CETES also get lower factors and small supply caps (see "Thin-market
+collateral" below).  `index` must match the order reserves are added,
+starting at 0.
 
   XLM    CAS3J7GYLGXMF6TDJBBYYSE3HQ6BBSMLNUQ34T6TZMYMW2EVH34XOWMA
     {"index":0,"decimals":7,"c_factor":7500000,"l_factor":7500000,"util":5000000,"max_util":7000000,"r_base":100000,"r_one":400000,"r_two":3000000,"r_three":50000000,"reactivity":20,"supply_cap":"10000000000000000","enabled":true}
@@ -137,18 +186,98 @@ the order reserves are added, starting at 0.
   EURC   CDTKPWPLOURQA2SGTKTUQOWRCBZEORB4BWBOMJ3D3ZTQQSGE5F6JBQLV
     {"index":2,"decimals":7,"c_factor":9000000,"l_factor":9000000,"util":7500000,"max_util":9000000,"r_base":300000,"r_one":400000,"r_two":1200000,"r_three":50000000,"reactivity":20,"supply_cap":"100000000000000","enabled":true}
   AQUA   CAUIKL3IYGMERDRUN6YSCLWVAKIFG5Q4YJHUKM4S4NJZQIA3BAS6OJPK
-    {"index":3,"decimals":7,"c_factor":5000000,"l_factor":5000000,"util":4000000,"max_util":7000000,"r_base":100000,"r_one":400000,"r_two":3000000,"r_three":50000000,"reactivity":20,"supply_cap":"10000000000000000","enabled":true}
+    {"index":3,"decimals":7,"c_factor":4000000,"l_factor":4000000,"util":4000000,"max_util":7000000,"r_base":100000,"r_one":400000,"r_two":3000000,"r_three":50000000,"reactivity":20,"supply_cap":"1800000000000000","enabled":true}
   USDGLO CB226ZOEYXTBPD3QEGABTJYSKZVBP2PASEISLG3SBMTN5CE4QZUVZ3CE
     {"index":4,"decimals":7,"c_factor":9000000,"l_factor":9000000,"util":7500000,"max_util":9000000,"r_base":300000,"r_one":400000,"r_two":1200000,"r_three":50000000,"reactivity":20,"supply_cap":"1000000000000","enabled":true}
   USTRY  CBLV4ATSIWU67CFSQU2NVRKINQIKUZ2ODSZBUJTJ43VJVRSBTZYOPNUR
-    {"index":5,"decimals":7,"c_factor":9000000,"l_factor":9000000,"util":5000000,"max_util":8000000,"r_base":100000,"r_one":200000,"r_two":1000000,"r_three":50000000,"reactivity":20,"supply_cap":"2500000000000","enabled":true}
+    {"index":5,"decimals":7,"c_factor":6000000,"l_factor":6000000,"util":5000000,"max_util":8000000,"r_base":100000,"r_one":200000,"r_two":1000000,"r_three":50000000,"reactivity":20,"supply_cap":"700000000000","enabled":true}
   CETES  CAL6ER2TI6CTRAY6BFXWNWA7WTYXUXTQCHUBCIBU5O6KM3HJFG6Z6VXV
-    {"index":6,"decimals":7,"c_factor":8000000,"l_factor":8000000,"util":5000000,"max_util":8000000,"r_base":100000,"r_one":300000,"r_two":1200000,"r_three":50000000,"reactivity":20,"supply_cap":"200000000000000","enabled":true}
+    {"index":6,"decimals":7,"c_factor":6000000,"l_factor":6000000,"util":5000000,"max_util":8000000,"r_base":100000,"r_one":300000,"r_two":1200000,"r_three":50000000,"reactivity":20,"supply_cap":"12000000000000","enabled":true}
   PYUSD  CCCRWH6Q3FNP3I2I57BDLM5AFAT7O6OF6GKQOC6SSJNDAVRZ57SPHGU2
     {"index":7,"decimals":7,"c_factor":9000000,"l_factor":9000000,"util":7500000,"max_util":9000000,"r_base":300000,"r_one":400000,"r_two":1200000,"r_three":50000000,"reactivity":20,"supply_cap":"50000000000000","enabled":true}
   USDT0  CBSJZEIO5C7KC2SF3MKSNXXJSW5G3VTNBX4ATMKUI3B2MR4JKM4R26YF
     {"index":8,"decimals":7,"c_factor":9500000,"l_factor":9500000,"util":8000000,"max_util":9500000,"r_base":300000,"r_one":400000,"r_two":1200000,"r_three":50000000,"reactivity":20,"supply_cap":"100000000000000","enabled":true}
     (rates copied from USDC; supply_cap 10M USDT0 is a placeholder)
+
+Thin-market collateral (AQUA, USTRY, CETES)
+-------------------------------------------
+
+The Feb 2026 ybx exploit: the USTRY/USDC SDEX book was empty, one 0.05
+USTRY trade at ~$106.7 set Reflector's price, and USTRY collateral was
+borrowed against for ~$10M.  Reflector now also counts AMM pool reserves,
+so the price of these assets is mostly the depth of their Aqua pools.
+
+Reflector changes (github.com/reflector-network/reflector-stellar-connector,
+read 2026-11-03; latest release v4.3.0):
+    2026-02-23  pool data aggregation and stable pool support (day after
+                the exploit)
+    2026-04-06  contract assets and Stellar classic liquidity pools
+    2026-05-25  per-period volumes; MIN_VOLUME rescaled
+    2026-10-09  Aqua and SushiSwap pools
+How a 1-minute period is priced now: SDEX trades plus each AMM pool's
+reserves counted as volume at the pool's implied price, summed into one
+volume-weighted price.  Pool reserves are read at the last ledger before
+the minute boundary.
+Remaining gaps:
+    * a pool counts if it has >= 100 units of base (USDC) reserve, a tiny
+      floor.  An asset with no pool above it is priced from SDEX trades
+      alone, i.e. exactly the Feb situation.
+    * no outlier/median filter on trades.
+    * a swap timed into the snapshot ledger still moves the price; it just
+      costs capital in proportion to pool depth.
+    * this is the code on GitHub; not verified which version the nodes run.
+
+Exploit write-ups:
+    https://www.halborn.com/blog/post/explained-the-yieldblox-hack-february-2026
+    https://blocksec.com/blog/yieldblox-dao-incident-on-stellar-oracle-misconfiguration-enabled-a-10m-drain
+    https://rekt.news/yieldblox-rekt
+    https://x.com/script3official/status/2029289721114051073  (Script3 post-mortem)
+    https://github.com/DK27ss/YieldBlox-10M-PoC
+
+The supply cap is in TOKENS, so it limits how much can be deposited, not
+the dollar loss.  For a price pushed to m times the real price:
+
+    attacker profit ~= cap value * (m * c_factor * 0.95 - 1)
+                       - cost of moving the Aqua pool by m
+
+    break-even m = 1 / (c_factor * 0.95)   (borrowing USDC, l = 0.95)
+        c 0.90 -> 1.17x    c 0.60 -> 1.75x    c 0.40 -> 2.63x
+
+    cost of moving a constant-product pool by m ~= (sqrt(m) - 1) * USDC side
+        USTRY/USDC ~$2.2M pool: 2x ~$455k, 3x ~$805k
+
+Settings (Aqua depth 2026-11-03):
+
+    asset  c=l   supply_cap (tokens)   ~value   main Aqua pool
+    USTRY  0.60      70,000 (7e11)      $75k    USDC ~$2.2M
+    CETES  0.60   1,200,000 (1.2e13)    $77k    USDC ~$2.3M
+    AQUA   0.40     180M    (1.8e15)    $50k    XLM ~$1.3M, USDC ~$440k
+
+Example: 200 USTRY (~$215) pushed to $100 -> 200*100*0.9 = $18k
+collateral at c 0.90 -> ~$17.1k USDC borrowed, ~$16.9k bad debt (backstop
+first).  The cap doesn't bind there.  Filling a ~$100k cap (92,850 USTRY)
+at $100 -> ~$7.9M of borrowing power, i.e. the whole pool.  So a cap only
+limits the loss together with something that limits m (pool depth,
+max_dev, low c_factor).
+
+At these caps a 2-3x push earns ~$10-55k and costs $450k+, so the attack
+loses money.  Cost estimates assume a single constant-product pool and
+ignore fees and the smaller pools Reflector also averages in (both make
+the attack harder).  The caps also limit honest deposits (~$75k USTRY
+total); raise them as Aqua depth grows (each change waits a week).
+Lowering l with c (to keep c = l) makes borrowing these assets expensive
+too (1/0.6 = 1.67x the debt).  The aggregator's max_dev (oracle/deploy-aggregator.sh)
+also forces a slow ramp: it only compares consecutive 5-minute rounds,
+so holding a price for two rounds passes it, but 2% steps take ~21
+rounds (~1h45m) to reach 1.5x.
+
+Re-check Aqua depth before deploy and periodically after.  If a pool
+drains (the Feb trigger was the market maker pulling out), lower c/cap
+(one-week timelock) or set_status 2/4 immediately.
+
+    curl -s 'https://amm-api.aqua.network/pools/?size=500'
+        (liquidity_usd looks like 7-decimal units)
+
 
 Differences on the existing BLNT v3 pool, for comparison (vs the ybx v2
 values):
