@@ -125,27 +125,33 @@ ReserveConfig has two fields that v1 didn't: `enabled` and `supply_cap`
     inv $POOL -- queue_set_reserve --asset $ASSET --metadata '<json>'
     inv $POOL -- set_reserve --asset $ASSET          # returns res_index
 
-ybx v2 reserve configs (the template).  `index` must match the order
-reserves are added, starting at 0.
+Reserve configs for the new pool.  Based on the ybx v2 pool, with two
+changes: c_factor = l_factor on every asset (ybx v2 had c_factor 0 on
+EURC, AQUA, USDGLO, USTRY, CETES), and USDT0 added.  `index` must match
+the order reserves are added, starting at 0.
 
   XLM    CAS3J7GYLGXMF6TDJBBYYSE3HQ6BBSMLNUQ34T6TZMYMW2EVH34XOWMA
     {"index":0,"decimals":7,"c_factor":7500000,"l_factor":7500000,"util":5000000,"max_util":7000000,"r_base":100000,"r_one":400000,"r_two":3000000,"r_three":50000000,"reactivity":20,"supply_cap":"10000000000000000","enabled":true}
   USDC   CCW67TSZV3SSS2HXMBQ5JFGCKJNXKZM7UQUWUZPUTHXSTZLEO7SJMI75
     {"index":1,"decimals":7,"c_factor":9500000,"l_factor":9500000,"util":8000000,"max_util":9500000,"r_base":300000,"r_one":400000,"r_two":1200000,"r_three":50000000,"reactivity":20,"supply_cap":"2000000000000000","enabled":true}
   EURC   CDTKPWPLOURQA2SGTKTUQOWRCBZEORB4BWBOMJ3D3ZTQQSGE5F6JBQLV
-    {"index":2,"decimals":7,"c_factor":0,"l_factor":9000000,"util":7500000,"max_util":9000000,"r_base":300000,"r_one":400000,"r_two":1200000,"r_three":50000000,"reactivity":20,"supply_cap":"100000000000000","enabled":true}
+    {"index":2,"decimals":7,"c_factor":9000000,"l_factor":9000000,"util":7500000,"max_util":9000000,"r_base":300000,"r_one":400000,"r_two":1200000,"r_three":50000000,"reactivity":20,"supply_cap":"100000000000000","enabled":true}
   AQUA   CAUIKL3IYGMERDRUN6YSCLWVAKIFG5Q4YJHUKM4S4NJZQIA3BAS6OJPK
-    {"index":3,"decimals":7,"c_factor":0,"l_factor":5000000,"util":4000000,"max_util":7000000,"r_base":100000,"r_one":400000,"r_two":3000000,"r_three":50000000,"reactivity":20,"supply_cap":"10000000000000000","enabled":true}
+    {"index":3,"decimals":7,"c_factor":5000000,"l_factor":5000000,"util":4000000,"max_util":7000000,"r_base":100000,"r_one":400000,"r_two":3000000,"r_three":50000000,"reactivity":20,"supply_cap":"10000000000000000","enabled":true}
   USDGLO CB226ZOEYXTBPD3QEGABTJYSKZVBP2PASEISLG3SBMTN5CE4QZUVZ3CE
-    {"index":4,"decimals":7,"c_factor":0,"l_factor":9000000,"util":7500000,"max_util":9000000,"r_base":300000,"r_one":400000,"r_two":1200000,"r_three":50000000,"reactivity":20,"supply_cap":"1000000000000","enabled":true}
+    {"index":4,"decimals":7,"c_factor":9000000,"l_factor":9000000,"util":7500000,"max_util":9000000,"r_base":300000,"r_one":400000,"r_two":1200000,"r_three":50000000,"reactivity":20,"supply_cap":"1000000000000","enabled":true}
   USTRY  CBLV4ATSIWU67CFSQU2NVRKINQIKUZ2ODSZBUJTJ43VJVRSBTZYOPNUR
-    {"index":5,"decimals":7,"c_factor":0,"l_factor":9000000,"util":5000000,"max_util":8000000,"r_base":100000,"r_one":200000,"r_two":1000000,"r_three":50000000,"reactivity":20,"supply_cap":"2500000000000","enabled":true}
+    {"index":5,"decimals":7,"c_factor":9000000,"l_factor":9000000,"util":5000000,"max_util":8000000,"r_base":100000,"r_one":200000,"r_two":1000000,"r_three":50000000,"reactivity":20,"supply_cap":"2500000000000","enabled":true}
   CETES  CAL6ER2TI6CTRAY6BFXWNWA7WTYXUXTQCHUBCIBU5O6KM3HJFG6Z6VXV
-    {"index":6,"decimals":7,"c_factor":0,"l_factor":8000000,"util":5000000,"max_util":8000000,"r_base":100000,"r_one":300000,"r_two":1200000,"r_three":50000000,"reactivity":20,"supply_cap":"200000000000000","enabled":true}
+    {"index":6,"decimals":7,"c_factor":8000000,"l_factor":8000000,"util":5000000,"max_util":8000000,"r_base":100000,"r_one":300000,"r_two":1200000,"r_three":50000000,"reactivity":20,"supply_cap":"200000000000000","enabled":true}
   PYUSD  CCCRWH6Q3FNP3I2I57BDLM5AFAT7O6OF6GKQOC6SSJNDAVRZ57SPHGU2
     {"index":7,"decimals":7,"c_factor":9000000,"l_factor":9000000,"util":7500000,"max_util":9000000,"r_base":300000,"r_one":400000,"r_two":1200000,"r_three":50000000,"reactivity":20,"supply_cap":"50000000000000","enabled":true}
+  USDT0  CBSJZEIO5C7KC2SF3MKSNXXJSW5G3VTNBX4ATMKUI3B2MR4JKM4R26YF
+    {"index":8,"decimals":7,"c_factor":9500000,"l_factor":9500000,"util":8000000,"max_util":9500000,"r_base":300000,"r_one":400000,"r_two":1200000,"r_three":50000000,"reactivity":20,"supply_cap":"100000000000000","enabled":true}
+    (rates copied from USDC; supply_cap 10M USDT0 is a placeholder)
 
-Differences on the existing BLNT v3 pool, for comparison:
+Differences on the existing BLNT v3 pool, for comparison (vs the ybx v2
+values):
     XLM   util 4000000, r_one 300000, reactivity 50, supply_cap 1e17
     USDC  max_util 9000000, supply_cap 1e16
     EURC  c_factor 9500000, l_factor 9500000, util 8000000, supply_cap 1e16
