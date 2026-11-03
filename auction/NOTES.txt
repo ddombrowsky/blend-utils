@@ -103,3 +103,50 @@ From blnt-contracts-v3/pool/src/auctions/tier_interest.rs:
 
 new-interest.sh is the Blend v2 equivalent (ybx v2 and other v2 pools, lots
 of up to 5 assets).
+
+## BLNT v3 liquidation test (2026-11-01)
+
+The bot runs on the MBP (ssh davidd@Davids-MBP-2.lan), docker container
+auction6, data in ~/work/blend/blend-utils/auction/data-v3/ (auctioneer.sqlite
+has per-user health_factor in the `users` table; logs/ has main, worker,
+bidder logs).
+
+Liquidation rules (pool/src/auctions/user_liquidation_auction.rs):
+* Only allowed when liabilities > collateral (HF < 1.0), after c_factor /
+  l_factor.  The bot creates one when HF < 0.998 (isLiquidatable).
+* A partial liquidation must leave the user with HF between 1.03 and 1.15.
+* Borrows are refused below HF 1.00001 (pool/submit.rs), so the closest you
+  can load an account is just over 1.0.
+* The bot rechecks users under HF 1.2 every ~100 min ("Scanning N users", N
+  includes the backstop) and on price changes.
+
+Test: loaded the xbull account (GDJSH2NU..., XLM collateral, EURC debt) to
+HF ~1.001 by borrowing EURC with `submit` (request_type 4 = Borrow, amount
+in 7-decimal units):
+
+    U=GDJSH2NU2WF6J4P5DL4522DUCABWSTZOKFQ7BHBCFYQ3QKC6FRYWP6OL
+    stellar contract invoke \
+      --id CACSQWCMKG45TUHCQ3LXHOB7YEEJH4W376ZHQPXH2IZ3TE4NJHFZMCY7 \
+      --source-account xbull --network mainnet --fee 10000000 -- \
+      submit --from $U --spender $U --to $U \
+        --requests '[{"request_type":4,"address":"CDTKPWPLOURQA2SGTKTUQOWRCBZEORB4BWBOMJ3D3ZTQQSGE5F6JBQLV","amount":"599397"}]'
+
+Add `--send no` to simulate first.  Amount to borrow for a target HF:
+  eff_coll = XLM bTokens * b_rate/1e12 * XLM price * 0.75
+  eff_liab = EURC dTokens * d_rate/1e12 * EURC price / 0.95
+  borrow EURC = (eff_coll/target - eff_liab) * 0.95 / EURC price
+(get_positions / get_reserve on the pool, lastprice on oracle
+CCVTVW2CVA7JLH4ROQGP3CU4T3EXVCK66AZGSM4MUQPXAI4QHCZPOATS).  It took two
+borrows because XLM rose against EURC after the first one.
+
+Result:
+* 22:00 EST: bot's scan saw HF 0.9971 and created a 26% liquidation
+  (new_auction type 0).  The worker signs with its own key GDTD2EX3..., so
+  that's the creator shown on chain.
+  https://stellar.expert/explorer/public/tx/b6eec00ee533d0e9f45089278d1af4a0f5616d589faea6384cfa8e0d1f6aeada
+* 22:17 EST: filler GAVG3ODZ... filled it 194 ledgers in.  Lot $2.93,
+  bid $2.66, about $0.28 profit.  The bot then unwound the position (repaid
+  EURC, withdrew XLM).
+  https://stellar.expert/explorer/public/tx/98f08cbe4222ed15247e4a8a4a1cb287c80a82f50c9885a37cdba0cca225a596
+* xbull went from 85.006 XLM / 91282839 EURC dTokens to 67.485 XLM /
+  67549300 dTokens, HF ~1.06.
