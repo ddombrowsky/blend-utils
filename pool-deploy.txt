@@ -1,94 +1,211 @@
+BLNT v3 pool deployment
+=======================
+
+Goal: a BLNT v3 pool modeled on the YieldBlox v2 pool.
+
+Source of truth for the v3 interface:
+    ~/work/script3/blend/blnt-contracts-v3/docs/V2_V3_PUBLIC_API.md
+    ~/work/script3/blend/blnt-contracts-v3/docs/V3_SYSTEM_SPEC.md
+
+Older (v1/v2) references, still useful for the general flow:
+    https://docs.blend.capital/pool-creators/tutorial-setting-up-a-pool
+    https://app.sorobanhub.com
+    https://raw.githubusercontent.com/Creit-Tech/SorobanHub-app/refs/heads/main/templates/project-views/blend/launch-pool.json
+
+All numbers are 7-decimal fixed point (20% = 2000000, $5 = 50000000).
+All commands below are mainnet, signed with the `xbull` key.  Add
+`--send no` to any of them to simulate first.
+
+    U=GDJSH2NU2WF6J4P5DL4522DUCABWSTZOKFQ7BHBCFYQ3QKC6FRYWP6OL   # xbull = admin
+    FACTORY=CAKLFWAHB2RIYRBSPUL6EH43AIQ5ILBEM7HTMWYSJRL7PHZQ676KMCV5
+    BACKSTOP=CAHCUKBPTW5DR5RNXOHCTJD5U76A6EEZXYZAQFRQEEQRXQ3CRUZ6Z3MO
+    inv() { stellar contract invoke --source-account xbull \
+              --network mainnet --fee 10000000 --id "$@"; }
+
+(other BLNT addresses are in ADDRESSES-BLNT.md)
 
 
-https://app.sorobanhub.com
+Reference pools (mainnet, read 2026-11-02)
+------------------------------------------
 
-https://raw.githubusercontent.com/Creit-Tech/SorobanHub-app/refs/heads/main/templates/project-views/blend/launch-pool.json
+YieldBlox v2:  CCCCIQSDILITHMM7PBSLVDT5MISSY7R26MNZXCX4H7J5JQ5FPIYOGYFS
+    oracle CD74A3C54EKUVEGUC6WNTUPOTHB624WFKXN3IYTFJGX3EHXDXHCYMXXR
+    bstop_rate 0, max_positions 6, min_collateral 50000000, status 3
 
-https://docs.blend.capital/pool-creators/tutorial-setting-up-a-pool
+BLNT v3:       CACSQWCMKG45TUHCQ3LXHOB7YEEJH4W376ZHQPXH2IZ3TE4NJHFZMCY7
+    oracle CCVTVW2CVA7JLH4ROQGP3CU4T3EXVCK66AZGSM4MUQPXAI4QHCZPOATS
+    bstop_rate 2000000, max_positions 6, min_collateral 50000000
+    backstop tiers [BlntXlm:4, BlntUsdc:3, Usdc:2], no access controller
+    reserves: XLM, USDC, EURC
 
-steps:
-
-0. Deploy an oracle aggregator.  This will often be a deployment of the 
-   `oracle-aggregator` contract, set to use one source for USDC and
-   another as the default.
-   CBWL56K3NK6XHUNTKDZNSEL37FR5CZMB6PF33KXSNHIDD5LLD4OT6IXB (ybx public)
-
-1. Deploy new pool
-   * contract address: pool factory contract id
-   * function: deploy()
-   * note that salt is a 64 character hex string
-        xxd -l32 -c 32 -ps /dev/random
-   * take rate is scaled to 7 decimals, so 20% = 2000000
-
-   example:
-    GDJS...P6OL invoked contract ￼CBNG...EZDK deploy(￼GDJS...P6OL, "Sveiks"str, msepzeI6wq2hEQXuqkLkPC6oMyygqo9B9Y1xYCdNcY4=bytes, ￼CAVL...6HLP, 20u32, 4u32) -> ￼CCEY...GGL7 
-
-1a. Deposit backstop tokens
-   * contract address: backstop contract id
-   * function: deposit()
-   * this might not be required, but can help the UI to not error out in some cases
-   * contract address is the backstop contract, NOT the comet LP contract
-        CDJQJS3TLZ6LEWSBOZ2E6QEZZ4NS3JU5LDT2BT7A4UHWAXPLSNE6MM37 (testnet)
-        CAO3AGAMZVRMHITL36EJ2VZQWKYRPWMQAPDQD5YEOF3GIF7T44U4JAL3 (public)
+Read them with:
+    inv $POOL --send no -- get_config
+    inv $POOL --send no -- get_reserve_list
+    inv $POOL --send no -- get_reserve --asset $ASSET
+    inv $FACTORY --send no -- backstop_config --pool_address $POOL
 
 
-2. Queue Set Reserve (for each asset)
-   * contract address: pool id, which is output of deployment (CCEY... in the example)
-   * function queue_set_reserve()
-   * assets ->
-         CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC (XLM testnet)
-         CAP5AMC2OHNVREO66DFIN6DHJMPOBAJ2KCDDIMFBR7WWJH5RZBFM3UEI (wBTC testnet)
-         CAZAQB3D7KSLSNOSQKYD2V4JP5V2Y3B4RDJZRLBFCCIXDCTE3WHSY3UE (wETH testnet)
-         CAQCFVLOBK5GIULPNZRGATJJMIZL5BSP7X5YJVMGCPTUEPFM4AVSRCJU (USDC testnet)
-   * metadata ->
-        index: 0
-        decimals: 7
-        c_factor:  8000000  = 0.80
-        l_factor:  8000000  = 0.80
-        util:      6000000  = 0.60  # util must be < max_util
-        max_util:  7000000  = 0.70
-        r_base:     100000  = 0.01
-        r_one:      500000  = 0.05
-        r_two:      500000  = 0.05
-        r_three:  50000000  = 5.00
-        react:          20  = 0.000002
+0. Oracle
+---------
 
-3. Call set reserve (for each asset)
-   * contract address: pool id
-   * function set_reserve()
-   * asset list is the same as in step 2
-   * make note of the index returned from each call, as this is the res_index
-   * NOTE: you can call set_reserve() after each queue_set_reserve() call 
-     if you want.
+The oracle is fixed at deploy time (update_pool can't change it), so pick
+it first.
 
-4. Set pool emissions
-   * contract address: pool id
-   * function set_emissions_config()
-   * vector -> [ 
-        res_index: 0
-        res_type: 0 # 0 for liabilities, 1 for supply
-        share: 1000000 = 10%
-    ] etc...
+The two existing oracles do NOT cover the same assets:
 
-5. Activate
-   * function: set_status()
-   * 0 = active, 2 = on ice, 4 = frozen
-   * status should be set to "on ice" first to allow deposits, then
-     updated to "active" once the threshold is met.
-   * IMPORTANT NOTE: there is a hard-coded backstop threshold of
-     200k product constant.  The exact amount of shares varies depending
-     on value, and is defined by this formula:
-        x = blend amount for 1 LP share
-        y = usdc amount for 1 LP share
-        k = x^0.8 * y^0.8
+    CD74A3C5...MXXR  (ybx)   base USDC.  Prices all 8 ybx reserves.
+                             USDC, USDGLO, PYUSD are pinned at 1.0.
+    CCVTVW2C...POATS (BLNT)  base USD.  Prices ONLY XLM, USDC, EURC
+                             (see `assets`).  lastprice errors for AQUA,
+                             USDGLO, USTRY, CETES, PYUSD.
 
-     At present 1 share equals 4.9158 BLND and 0.0555 USDC, so 1 share = 
-        4.9158^0.8 * 0.0555^0.2 = 2.005090414527 PC
+Options:
+    a. use the ybx oracle as-is (depends on its operator)
+    b. deploy our own `oracle-aggregator` (~/work/script3/blend/oracle-aggregator)
+       covering the extra assets
+    c. launch with XLM/USDC/EURC only on the BLNT oracle
 
-     To meet the 200k PC threshold, you'd need about 99.8k LP shares
-     in the backstop.
-     
+Check coverage of a candidate oracle:
+    inv $ORACLE --send no -- assets
+    inv $ORACLE --send no -- lastprice --asset '{"Stellar":"<asset>"}'
+
+    ORACLE=<chosen oracle>
 
 
+1. Deploy the pool
+------------------
+
+    contract: pool factory
+    function: deploy(admin, name, salt, oracle, backstop_take_rate,
+                     max_positions, min_collateral, backstop_config,
+                     access_controller) -> pool address
+
+Changes from v1:
+    * min_collateral (v2) - minimum collateral value per user, $5 on both
+      reference pools.
+    * backstop_config (v3) - ordered list of 0-3 tiers.  Order is the
+      loss waterfall: FirstLoss, SecondLoss, ThirdLoss.  Each tier is
+          {"asset": BlntXlm | BlntUsdc | Usdc | Xlm, "take_rate_weight": 1..100}
+      BlntXlm and BlntUsdc may each appear once; Usdc/Xlm may repeat.
+      Only the BLNT LP tiers earn BLNT emissions.
+      IMMUTABLE.  An empty list = unbackstopped pool, which forces
+      backstop_take_rate = 0 forever.
+    * access_controller (v3) - optional; null = permissionless.
+
+Salt is 32 random bytes as 64 hex chars:
+    SALT=$(xxd -l32 -c 32 -ps /dev/random)
+
+    inv $FACTORY -- deploy \
+        --admin $U \
+        --name "<pool name>" \
+        --salt $SALT \
+        --oracle $ORACLE \
+        --backstop_take_rate 2000000 \
+        --max_positions 6 \
+        --min_collateral 50000000 \
+        --backstop_config '[{"asset":"BlntXlm","take_rate_weight":4},{"asset":"BlntUsdc","take_rate_weight":3},{"asset":"Usdc","take_rate_weight":2}]' \
+        --access_controller null
+
+    POOL=<returned address>
+
+(take rate and tiers above copy the existing BLNT pool; the ybx v2 pool
+has a take rate of 0.)
 
 
+2. Reserves: queue_set_reserve + set_reserve (for each asset)
+------------------------------------------------------------
+
+A new pool starts in status 6 (setup).  While in setup there is no
+timelock: set_reserve can be called right after queue_set_reserve.  Once
+the status changes, a reserve change waits one week.
+
+ReserveConfig has two fields that v1 didn't: `enabled` and `supply_cap`
+(supply_cap is in 7-decimal token units).  util must be < max_util.
+
+    inv $POOL -- queue_set_reserve --asset $ASSET --metadata '<json>'
+    inv $POOL -- set_reserve --asset $ASSET          # returns res_index
+
+ybx v2 reserve configs (the template).  `index` must match the order
+reserves are added, starting at 0.
+
+  XLM    CAS3J7GYLGXMF6TDJBBYYSE3HQ6BBSMLNUQ34T6TZMYMW2EVH34XOWMA
+    {"index":0,"decimals":7,"c_factor":7500000,"l_factor":7500000,"util":5000000,"max_util":7000000,"r_base":100000,"r_one":400000,"r_two":3000000,"r_three":50000000,"reactivity":20,"supply_cap":"10000000000000000","enabled":true}
+  USDC   CCW67TSZV3SSS2HXMBQ5JFGCKJNXKZM7UQUWUZPUTHXSTZLEO7SJMI75
+    {"index":1,"decimals":7,"c_factor":9500000,"l_factor":9500000,"util":8000000,"max_util":9500000,"r_base":300000,"r_one":400000,"r_two":1200000,"r_three":50000000,"reactivity":20,"supply_cap":"2000000000000000","enabled":true}
+  EURC   CDTKPWPLOURQA2SGTKTUQOWRCBZEORB4BWBOMJ3D3ZTQQSGE5F6JBQLV
+    {"index":2,"decimals":7,"c_factor":0,"l_factor":9000000,"util":7500000,"max_util":9000000,"r_base":300000,"r_one":400000,"r_two":1200000,"r_three":50000000,"reactivity":20,"supply_cap":"100000000000000","enabled":true}
+  AQUA   CAUIKL3IYGMERDRUN6YSCLWVAKIFG5Q4YJHUKM4S4NJZQIA3BAS6OJPK
+    {"index":3,"decimals":7,"c_factor":0,"l_factor":5000000,"util":4000000,"max_util":7000000,"r_base":100000,"r_one":400000,"r_two":3000000,"r_three":50000000,"reactivity":20,"supply_cap":"10000000000000000","enabled":true}
+  USDGLO CB226ZOEYXTBPD3QEGABTJYSKZVBP2PASEISLG3SBMTN5CE4QZUVZ3CE
+    {"index":4,"decimals":7,"c_factor":0,"l_factor":9000000,"util":7500000,"max_util":9000000,"r_base":300000,"r_one":400000,"r_two":1200000,"r_three":50000000,"reactivity":20,"supply_cap":"1000000000000","enabled":true}
+  USTRY  CBLV4ATSIWU67CFSQU2NVRKINQIKUZ2ODSZBUJTJ43VJVRSBTZYOPNUR
+    {"index":5,"decimals":7,"c_factor":0,"l_factor":9000000,"util":5000000,"max_util":8000000,"r_base":100000,"r_one":200000,"r_two":1000000,"r_three":50000000,"reactivity":20,"supply_cap":"2500000000000","enabled":true}
+  CETES  CAL6ER2TI6CTRAY6BFXWNWA7WTYXUXTQCHUBCIBU5O6KM3HJFG6Z6VXV
+    {"index":6,"decimals":7,"c_factor":0,"l_factor":8000000,"util":5000000,"max_util":8000000,"r_base":100000,"r_one":300000,"r_two":1200000,"r_three":50000000,"reactivity":20,"supply_cap":"200000000000000","enabled":true}
+  PYUSD  CCCRWH6Q3FNP3I2I57BDLM5AFAT7O6OF6GKQOC6SSJNDAVRZ57SPHGU2
+    {"index":7,"decimals":7,"c_factor":9000000,"l_factor":9000000,"util":7500000,"max_util":9000000,"r_base":300000,"r_one":400000,"r_two":1200000,"r_three":50000000,"reactivity":20,"supply_cap":"50000000000000","enabled":true}
+
+Differences on the existing BLNT v3 pool, for comparison:
+    XLM   util 4000000, r_one 300000, reactivity 50, supply_cap 1e17
+    USDC  max_util 9000000, supply_cap 1e16
+    EURC  c_factor 9500000, l_factor 9500000, util 8000000, supply_cap 1e16
+
+Only add assets the chosen oracle can price (step 0).
+
+
+3. Emissions
+------------
+
+    inv $POOL -- set_emissions_config --res_emission_metadata '[
+        {"res_index":0,"res_type":0,"share":"1000000"}, ...]'
+
+    res_type: 0 = liabilities (dTokens, borrowers),
+              1 = supply (bTokens, lenders)
+    share: 7 decimals, shares should add up to 1.0 (10000000)
+
+Emissions are BLNT.  The pool only gets them if it has a BlntXlm or
+BlntUsdc backstop tier.
+
+
+4. Backstop deposit (optional)
+------------------------------
+
+v3 deposits name a tier.  The tier must exist in the pool's
+backstop_config, and the deposit token is that tier's asset (the BLNT LP,
+USDC, or XLM), NOT the BLND/USDC Comet LP.
+
+    inv $BACKSTOP -- deposit --tier FirstLoss --from $U --pool $POOL --amount <n>
+
+Tiers: FirstLoss, SecondLoss, ThirdLoss.  Check with
+    inv $BACKSTOP --send no -- pool_data --pool $POOL
+
+
+5. Status
+---------
+
+    inv $POOL -- set_status --pool_status <n>
+
+    0 admin active    1 active      2 admin on ice   3 on ice
+    4 admin frozen    5 frozen      6 setup (initial state)
+
+set_status only accepts 0, 2, 3, 4.  Statuses 1 and 5 are only reached
+through update_status, driven by the backstop's queued-withdrawal ratio
+(q4w_pct).  (pool/src/pool/status.rs)
+
+There is NO minimum backstop value in v3 (the old 200k BLND/USDC
+"product constant" threshold is gone).  The only gate is q4w_pct, the
+value-weighted share of backstop deposits queued for withdrawal.
+
+set_status allowed when:
+    0 admin active     q4w < 50%
+    2/3 on ice         q4w < 75%
+    4 admin frozen     always
+
+update_status transitions:
+    admin active  -> on ice   at q4w >= 50%
+    admin on ice  -> frozen   at q4w >= 75%
+    active/on ice/frozen      >= 60% frozen, >= 30% on ice, else active
+    setup and admin frozen can't be changed by update_status
+
+Leaving setup (6) starts the one-week timelock on any later reserve
+change (step 2), so finish adding reserves first.
