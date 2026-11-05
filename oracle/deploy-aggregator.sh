@@ -9,7 +9,9 @@
 #   ~/work/script3/blend/oracle-aggregator, `git show v2.0.0:README.md`
 #
 # Assets can NEVER be removed or edited once added, so `add-assets` only
-# simulates unless SEND=yes.  add_asset returns the price it would report,
+# simulates unless SEND=yes.  New assets can be added at any time; both
+# add-oracle and add-assets skip what's already configured, so re-running
+# them is safe.  add_asset returns the price it would report,
 # so the simulation shows whether Reflector has a price for each asset.
 #
 # usage:
@@ -53,20 +55,21 @@ USDGLO CB226ZOEYXTBPD3QEGABTJYSKZVBP2PASEISLG3SBMTN5CE4QZUVZ3CE 2
 USTRY  CBLV4ATSIWU67CFSQU2NVRKINQIKUZ2ODSZBUJTJ43VJVRSBTZYOPNUR 2
 CETES  CAL6ER2TI6CTRAY6BFXWNWA7WTYXUXTQCHUBCIBU5O6KM3HJFG6Z6VXV 3
 PYUSD  CCCRWH6Q3FNP3I2I57BDLM5AFAT7O6OF6GKQOC6SSJNDAVRZ57SPHGU2 2
-USDT0  CBSJZEIO5C7KC2SF3MKSNXXJSW5G3VTNBX4ATMKUI3B2MR4JKM4R26YF 2"
+USDT0  CBSJZEIO5C7KC2SF3MKSNXXJSW5G3VTNBX4ATMKUI3B2MR4JKM4R26YF 2
+SolvBTC CBIJBDNZNF4X35BJ4FFZWCDBSCKOP5NB4PLG4SNENRMLAPYG4P5FM6VN 10"
 
 if [ "$SEND" = yes ]; then SENDOPT="--send yes"; else SENDOPT="--send no"; fi
 
 inv() {
     id=$1; shift
     stellar contract invoke --id $id --source-account $SOURCE \
-        --network $NETWORK --fee 10000000 $SENDOPT -- "$@"
+        --network $NETWORK --inclusion-fee 10000000 $SENDOPT -- "$@"
 }
 
 case "$1" in
 deploy)
     stellar contract deploy --wasm-hash $WASM_HASH \
-        --source-account $SOURCE --network $NETWORK --fee 10000000 -- \
+        --source-account $SOURCE --network $NETWORK --inclusion-fee 10000000 -- \
         --admin $ADMIN \
         --base "{\"Stellar\":\"$USDC\"}" \
         --decimals $DECIMALS \
@@ -75,16 +78,25 @@ deploy)
 
 add-oracle)
     ID=${2:?usage: $0 add-oracle <aggregator id>}
-    SENDOPT="--send yes"
-    inv $ID add_oracle --oracle_id $REFLECTOR
+    SENDOPT="--send no"
+    if inv $ID oracles | grep -q $REFLECTOR; then
+        echo "Reflector already added"
+    else
+        SENDOPT="--send yes"
+        inv $ID add_oracle --oracle_id $REFLECTOR
+        SENDOPT="--send no"
+    fi
     inv $ID oracles
     ;;
 
 add-assets)
     ID=${2:?usage: $0 add-assets <aggregator id>}
     [ "$SEND" = yes ] || echo "*** simulating only; SEND=yes to send ***"
+    CONFIGURED=$(SENDOPT="--send no" inv $ID asset_configs)
     echo "$ASSETS" | while read name addr maxdev; do
         [ -n "$name" ] || continue
+        case "$CONFIGURED" in *$addr*)
+            echo "skip $name (already added)"; continue;; esac
         echo "add_asset $name max_dev $maxdev"
         inv $ID add_asset \
             --asset "{\"Stellar\":\"$addr\"}" \

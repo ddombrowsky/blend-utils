@@ -106,7 +106,7 @@ of up to 5 assets).
 
 ## BLNT v3 liquidation test (2026-11-01)
 
-The bot runs on the MBP (ssh davidd@Davids-MBP-2.lan), docker container
+The bot runs on a separate local machine, docker container
 auction6, data in ~/work/blend/blend-utils/auction/data-v3/ (auctioneer.sqlite
 has per-user health_factor in the `users` table; logs/ has main, worker,
 bidder logs).

@@ -1,0 +1,29 @@
+YieldBlent Pool
+---------------
+
+todo:
+
+* [X] add solvBTC CBIJBDNZNF4X35BJ4FFZWCDBSCKOP5NB4PLG4SNENRMLAPYG4P5FM6VN
+* [ ] deploy and test oracle to pubnet
+* [ ] generate script for step-by-step contract deployment
+
+------
+Oracle
+------
+
+```
+$ ../oracle/deploy-aggregator.sh deploy
+  Deploying contract using wasm hash 41df04894bf2d8291492326f7a6ab9c90a90cc9828e31990ce8aeeab42680bfd
+  `--fee [env: STELLAR_FEE]` is deprecated and will be removed in future versions of the CLI. Use `--inclusion-fee [env: STELLAR_INCLUSION_FEE]` instead.
+  Simulating transaction…
+  Signing transaction: b3b4036f901106e8ecb79edf67b75d3e9b52684c78f1ce092af6a73dc1350101
+ Sending transaction…
+ Transaction submitted successfully!
+ https://stellar.expert/explorer/public/tx/b3b4036f901106e8ecb79edf67b75d3e9b52684c78f1ce092af6a73dc1350101
+ https://lab.stellar.org/r/mainnet/contract/CDN7JD6SP32RZHB3DHK4S4AWCCQF6GYIUO455UCR4RGRZILZDRD24N36
+ Deployed!
+CDN7JD6SP32RZHB3DHK4S4AWCCQF6GYIUO455UCR4RGRZILZDRD24N36
+```
+
+address: CDN7JD6SP32RZHB3DHK4S4AWCCQF6GYIUO455UCR4RGRZILZDRD24N36
+

@@ -20,7 +20,7 @@ simulate first.
     FACTORY=CAKLFWAHB2RIYRBSPUL6EH43AIQ5ILBEM7HTMWYSJRL7PHZQ676KMCV5
     BACKSTOP=CAHCUKBPTW5DR5RNXOHCTJD5U76A6EEZXYZAQFRQEEQRXQ3CRUZ6Z3MO
     inv() { stellar contract invoke --source-account alice \
-              --network mainnet --fee 10000000 --id "$@"; }
+              --network mainnet --inclusion-fee 10000000 --id "$@"; }
 
 (other BLNT addresses are in ADDRESSES-BLNT.md)
 
@@ -54,6 +54,7 @@ Script: oracle/deploy-aggregator.sh (deploy, add-oracle, add-assets,
 check).  Then:
 
     ORACLE=<id printed by `oracle/deploy-aggregator.sh deploy`>
+    (deployed 2026-11-05: CDN7JD6SP32RZHB3DHK4S4AWCCQF6GYIUO455UCR4RGRZILZDRD24N36)
 
 The oracle is fixed at deploy time (update_pool can't change it), so it
 has to exist before step 1.
@@ -89,7 +90,8 @@ Reflector feeds (both 14 decimals, 300s resolution):
         base USDC.  Has XLM, EURC, AQUA, USDGLO, USTRY, CETES, PYUSD and
         USDT0 (CBSJZEIO5C7KC2SF3MKSNXXJSW5G3VTNBX4ATMKUI3B2MR4JKM4R26YF,
         issuer GATISXX6BZ6NC7IKQBY37CJD4SOZL3CYZJWXEDG6JVIY4WBS6KXJHN6Q,
-        ~0.9996 USDC).
+        ~0.9996 USDC) and SolvBTC (CBIJBDNZ...M6VN, 8 decimals, ~$79.1k
+        on 2026-11-04, ~2% under the CEX feed's BTC).
     CAFJZQWSED6YAWZU3GWRTOCNPPCGBN32L7QV43XX5LZLFTK6JLN34DLN  exchanges
         base USD.  BTC ETH USDT XRP SOL USDC ADA AVAX DOT MATIC LINK DAI
         ATOM XLM UNI EURC.  Generic "USDT", not the Stellar USDT0 token.
@@ -157,7 +159,7 @@ timelock: set_reserve can be called right after queue_set_reserve.  Once
 the status changes, a reserve change waits one week.
 
 ReserveConfig has two fields that v1 didn't: `enabled` and `supply_cap`
-(supply_cap is in 7-decimal token units).  util must be < max_util.
+(supply_cap is in the token's smallest units: 1e-7 for most, 1e-8 for SolvBTC).  util must be < max_util.
 
     inv $POOL -- queue_set_reserve --asset $ASSET --metadata '<json>'
     inv $POOL -- set_reserve --asset $ASSET          # returns res_index
@@ -174,7 +176,7 @@ c_factor / l_factor:
 
 Reserve configs for the new pool.  Based on the ybx v2 pool, with two
 changes: c_factor = l_factor on every asset (ybx v2 had c_factor 0 on
-EURC, AQUA, USDGLO, USTRY, CETES), and USDT0 added.  AQUA, USTRY and
+EURC, AQUA, USDGLO, USTRY, CETES), and USDT0 and SolvBTC added.  AQUA, USTRY and
 CETES also get lower factors and small supply caps (see "Thin-market
 collateral" below).  `index` must match the order reserves are added,
 starting at 0.
@@ -198,6 +200,10 @@ starting at 0.
   USDT0  CBSJZEIO5C7KC2SF3MKSNXXJSW5G3VTNBX4ATMKUI3B2MR4JKM4R26YF
     {"index":8,"decimals":7,"c_factor":9500000,"l_factor":9500000,"util":8000000,"max_util":9500000,"r_base":300000,"r_one":400000,"r_two":1200000,"r_three":50000000,"reactivity":20,"supply_cap":"100000000000000","enabled":true}
     (rates copied from USDC; supply_cap 10M USDT0 is a placeholder)
+  SolvBTC CBIJBDNZNF4X35BJ4FFZWCDBSCKOP5NB4PLG4SNENRMLAPYG4P5FM6VN
+    {"index":9,"decimals":8,"c_factor":7500000,"l_factor":7500000,"util":5000000,"max_util":7000000,"r_base":100000,"r_one":400000,"r_two":3000000,"r_three":50000000,"reactivity":20,"supply_cap":"2000000000","enabled":true}
+    (8 decimals, so supply_cap is in 1e-8 units: 20 SolvBTC, ~$1.6M,
+    a placeholder; rates copied from XLM)
 
 Thin-market collateral (AQUA, USTRY, CETES)
 -------------------------------------------
