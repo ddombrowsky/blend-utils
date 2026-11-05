@@ -13,17 +13,138 @@ Oracle
 
 ```
 $ ../oracle/deploy-aggregator.sh deploy
-  Deploying contract using wasm hash 41df04894bf2d8291492326f7a6ab9c90a90cc9828e31990ce8aeeab42680bfd
-  `--fee [env: STELLAR_FEE]` is deprecated and will be removed in future versions of the CLI. Use `--inclusion-fee [env: STELLAR_INCLUSION_FEE]` instead.
-  Simulating transaction…
-  Signing transaction: b3b4036f901106e8ecb79edf67b75d3e9b52684c78f1ce092af6a73dc1350101
- Sending transaction…
- Transaction submitted successfully!
- https://stellar.expert/explorer/public/tx/b3b4036f901106e8ecb79edf67b75d3e9b52684c78f1ce092af6a73dc1350101
- https://lab.stellar.org/r/mainnet/contract/CDN7JD6SP32RZHB3DHK4S4AWCCQF6GYIUO455UCR4RGRZILZDRD24N36
- Deployed!
+Deploying contract using wasm hash 41df04894bf2d8291492326f7a6ab9c90a90cc9828e31990ce8aeeab42680bfd
+Simulating transaction…
+Signing transaction: b3b4036f901106e8ecb79edf67b75d3e9b52684c78f1ce092af6a73dc1350101
+Sending transaction…
+Transaction submitted successfully!
+https://stellar.expert/explorer/public/tx/b3b4036f901106e8ecb79edf67b75d3e9b52684c78f1ce092af6a73dc1350101
+https://lab.stellar.org/r/mainnet/contract/CDN7JD6SP32RZHB3DHK4S4AWCCQF6GYIUO455UCR4RGRZILZDRD24N36
+Deployed!
 CDN7JD6SP32RZHB3DHK4S4AWCCQF6GYIUO455UCR4RGRZILZDRD24N36
 ```
 
 address: CDN7JD6SP32RZHB3DHK4S4AWCCQF6GYIUO455UCR4RGRZILZDRD24N36
 
+Oracle setup:
+
+```
+ID=CDN7JD6SP32RZHB3DHK4S4AWCCQF6GYIUO455UCR4RGRZILZDRD24N36
+./deploy-aggregator.sh add-oracle $ID
+./deploy-aggregator.sh add-assets $ID
+SEND=yes ./deploy-aggregator.sh add-assets $ID
+./deploy-aggregator.sh check $ID
+```
+
+Output:
+
+```
+== 1. add Reflector DEX feed as oracle (sends)
+Simulating transaction…
+Signing transaction: 8b40b8c7cf0694e7772d3869c64472fd865e5f2aee951c849bdb83a8db3583cd
+Sending transaction…
+Transaction submitted successfully!
+https://stellar.expert/explorer/public/tx/8b40b8c7cf0694e7772d3869c64472fd865e5f2aee951c849bdb83a8db3583cd
+
+[{"address":"CALI2BYU2JE6WVRUFYTS6MSBNEHGJ35P4AVCZYF3B6QOE3QKOB2PLE6M","decimals":14,"index":0,"resolution":300}]
+== 2. simulate add_asset for every asset
+*** simulating only; SEND=yes to send ***
+add_asset XLM max_dev 0
+{"price":"1641815","timestamp":1793885100}
+add_asset EURC max_dev 10
+{"price":"11133078","timestamp":1793885100}
+add_asset AQUA max_dev 10
+{"price":"2752","timestamp":1793885100}
+add_asset USDGLO max_dev 2
+{"price":"9999325","timestamp":1793885100}
+add_asset USTRY max_dev 2
+{"price":"10775004","timestamp":1793885100}
+add_asset CETES max_dev 3
+{"price":"641013","timestamp":1793885100}
+add_asset PYUSD max_dev 2
+{"price":"9998402","timestamp":1793885100}
+add_asset USDT0 max_dev 2
+{"price":"9995177","timestamp":1793885100}
+add_asset SolvBTC max_dev 10
+{"price":"773858113466","timestamp":1793885100}
+
+Each asset above should show a price.  Assets can never be removed
+or edited.  Send them for real? [y/N] y
+== 3. add assets (sends)
+add_asset XLM max_dev 0
+Simulating transaction…
+Signing transaction: 358ac50a1d1fb497b44da8f4139a497ddb3cfd3081e7f837ed76d218b6c218f5
+Sending transaction…
+Transaction submitted successfully!
+https://stellar.expert/explorer/public/tx/358ac50a1d1fb497b44da8f4139a497ddb3cfd3081e7f837ed76d218b6c218f5
+{"price":"1641815","timestamp":1793885100}
+add_asset EURC max_dev 10
+Simulating transaction…
+Signing transaction: d9be3db270905206bfdc3f4caaad739f8d2997c76b00475d37eef0fa1a31765a
+Sending transaction…
+Transaction submitted successfully!
+https://stellar.expert/explorer/public/tx/d9be3db270905206bfdc3f4caaad739f8d2997c76b00475d37eef0fa1a31765a
+{"price":"11133078","timestamp":1793885100}
+add_asset AQUA max_dev 10
+Simulating transaction…
+Signing transaction: 40105c739ecc3b71107e0df5ca1cd4e3819ca5d76f7b3af04e719b2d610ecd94
+Sending transaction…
+Transaction submitted successfully!
+https://stellar.expert/explorer/public/tx/40105c739ecc3b71107e0df5ca1cd4e3819ca5d76f7b3af04e719b2d610ecd94
+{"price":"2752","timestamp":1793885100}
+add_asset USDGLO max_dev 2
+Simulating transaction…
+Signing transaction: 99af31e0665e283ca8b966179031c630e8803e40cf5762c3a6f42f024f709b64
+Sending transaction…
+Transaction submitted successfully!
+https://stellar.expert/explorer/public/tx/99af31e0665e283ca8b966179031c630e8803e40cf5762c3a6f42f024f709b64
+{"price":"9999325","timestamp":1793885100}
+add_asset USTRY max_dev 2
+Simulating transaction…
+Signing transaction: f65d60fb167ea9df60d55a0ac48bdea23c12388d085c11ce27e0d4f22d6f1d98
+Sending transaction…
+Transaction submitted successfully!
+https://stellar.expert/explorer/public/tx/f65d60fb167ea9df60d55a0ac48bdea23c12388d085c11ce27e0d4f22d6f1d98
+{"price":"10775004","timestamp":1793885100}
+add_asset CETES max_dev 3
+Simulating transaction…
+Signing transaction: f2687d8282c4ee39362a3398fff6ba8543718adce8c3471832da5a1542948cd8
+Sending transaction…
+Transaction submitted successfully!
+https://stellar.expert/explorer/public/tx/f2687d8282c4ee39362a3398fff6ba8543718adce8c3471832da5a1542948cd8
+{"price":"641013","timestamp":1793885100}
+add_asset PYUSD max_dev 2
+Simulating transaction…
+Signing transaction: 44d405d19db1aeb94219a43173f0636d0264d9d04b0238c025bc17fa90f021b8
+Sending transaction…
+Transaction submitted successfully!
+https://stellar.expert/explorer/public/tx/44d405d19db1aeb94219a43173f0636d0264d9d04b0238c025bc17fa90f021b8
+{"price":"9998402","timestamp":1793885100}
+add_asset USDT0 max_dev 2
+Simulating transaction…
+Signing transaction: 321ce45830a4c14745885c764f83b98c57dd557e49c4eceac60fab75da2fea8e
+Sending transaction…
+Transaction submitted successfully!
+https://stellar.expert/explorer/public/tx/321ce45830a4c14745885c764f83b98c57dd557e49c4eceac60fab75da2fea8e
+{"price":"9995177","timestamp":1793885100}
+add_asset SolvBTC max_dev 10
+Simulating transaction…
+Signing transaction: 7ee582d2d27ea9a8a6becd3bd197625f325ce26d0b1bfe96ea5990914924e6fb
+Sending transaction…
+Transaction submitted successfully!
+https://stellar.expert/explorer/public/tx/7ee582d2d27ea9a8a6becd3bd197625f325ce26d0b1bfe96ea5990914924e6fb
+{"price":"773858113466","timestamp":1793885100}
+== 4. check
+base {"Stellar":"CCW67TSZV3SSS2HXMBQ5JFGCKJNXKZM7UQUWUZPUTHXSTZLEO7SJMI75"} decimals 7 max_age 900
+[{"address":"CALI2BYU2JE6WVRUFYTS6MSBNEHGJ35P4AVCZYF3B6QOE3QKOB2PLE6M","decimals":14,"index":0,"resolution":300}]
+USDC    {"price":"10000000","timestamp":1793885329}
+XLM     {"price":"1641815","timestamp":1793885100}
+EURC    {"price":"11133078","timestamp":1793885100}
+AQUA    {"price":"2752","timestamp":1793885100}
+USDGLO  {"price":"9999325","timestamp":1793885100}
+USTRY   {"price":"10775004","timestamp":1793885100}
+CETES   {"price":"641013","timestamp":1793885100}
+PYUSD   {"price":"9998402","timestamp":1793885100}
+USDT0   {"price":"9995177","timestamp":1793885100}
+SolvBTC {"price":"773858113466","timestamp":1793885100}
+```

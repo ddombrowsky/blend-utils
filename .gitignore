@@ -1,2 +1,4 @@
 NOTES.local
 *.local.sh
+oracle/prices.db
+oracle/watch-prices.log
