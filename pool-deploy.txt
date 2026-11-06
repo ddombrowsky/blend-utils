@@ -300,14 +300,29 @@ Only add assets the chosen oracle can price (step 0).
 ------------
 
     inv $POOL -- set_emissions_config --res_emission_metadata '[
-        {"res_index":0,"res_type":0,"share":"1000000"}, ...]'
+        {"res_index":0,"res_type":0,"share":1000000}, ...]'
 
     res_type: 0 = liabilities (dTokens, borrowers),
               1 = supply (bTokens, lenders)
-    share: 7 decimals, shares should add up to 1.0 (10000000)
+    share: 7 decimals, a JSON number (not a string).  Shares are relative
+        weights: each is divided by the total of the enabled reserves'
+        shares, so adding up to 1.0 (10000000) is only a convention.
+        0 is rejected; each (res_index, res_type) may appear once.
+    The whole config is replaced on each call.  No getter; read it with
+        stellar contract read --network mainnet --id $POOL --key PoolEmis \
+            --durability persistent --output string
+    (map of reserve token id = res_index*2 + res_type -> share)
 
 Emissions are BLNT.  The pool only gets them if it has a BlntXlm or
-BlntUsdc backstop tier.
+BlntUsdc backstop tier AND is in the backstop reward zone.  Entering
+needs a positive BLNT LP deposit in its backstop (step 4), then
+    inv $BACKSTOP -- add_reward --to_add $POOL     # omit --to_remove (None)
+(V3_SYSTEM_SPEC.md 6.2; zone max 30 pools).  BLNT is split among
+reward-zone pools by the BLNT inside each pool's backstop LP.
+
+YieldBlent (DECISION 2026-11-05): USDC borrow 30%, XLM supply 20%, SolvBTC
+supply 15%, EURC borrow 15%, PYUSD supply 10%, USDT0 supply 10%.
+The BLNT v3 pool uses XLM supply 20%, USDC borrow 40%, EURC borrow 40%.
 
 
 4. Backstop deposit (optional)

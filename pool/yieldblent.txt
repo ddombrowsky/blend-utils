@@ -198,5 +198,50 @@ pool-deploy.txt, then step 2 (reserves).
 reserves
 ------
 
-See deploy script: `set-reserves-yieldblent.sh`
+Deploy script: `set-reserves-yieldblent.sh`
 
+-----
+emissions
+-----
+
+Deploy script: `./set-emissions-yieldblent.sh`
+
+Output:
+
+```
+== 0. pool state
+10 reserves
+  0 XLM      CAS3J7GYLGXMF6TDJBBYYSE3HQ6BBSMLNUQ34T6TZMYMW2EVH34XOWMA
+  1 USDC     CCW67TSZV3SSS2HXMBQ5JFGCKJNXKZM7UQUWUZPUTHXSTZLEO7SJMI75
+  2 EURC     CDTKPWPLOURQA2SGTKTUQOWRCBZEORB4BWBOMJ3D3ZTQQSGE5F6JBQLV
+  3 AQUA     CAUIKL3IYGMERDRUN6YSCLWVAKIFG5Q4YJHUKM4S4NJZQIA3BAS6OJPK
+  4 USDGLO   CB226ZOEYXTBPD3QEGABTJYSKZVBP2PASEISLG3SBMTN5CE4QZUVZ3CE
+  5 USTRY    CBLV4ATSIWU67CFSQU2NVRKINQIKUZ2ODSZBUJTJ43VJVRSBTZYOPNUR
+  6 CETES    CAL6ER2TI6CTRAY6BFXWNWA7WTYXUXTQCHUBCIBU5O6KM3HJFG6Z6VXV
+  7 PYUSD    CCCRWH6Q3FNP3I2I57BDLM5AFAT7O6OF6GKQOC6SSJNDAVRZ57SPHGU2
+  8 USDT0    CBSJZEIO5C7KC2SF3MKSNXXJSW5G3VTNBX4ATMKUI3B2MR4JKM4R26YF
+  9 SolvBTC  CBIJBDNZNF4X35BJ4FFZWCDBSCKOP5NB4PLG4SNENRMLAPYG4P5FM6VN
+current emissions config: (none)
+
+== 1. planned split
+  USDC    borrow  30%   (token id 2)
+  XLM     supply  20%   (token id 1)
+  SolvBTC supply  15%   (token id 19)
+  EURC    borrow  15%   (token id 4)
+  PYUSD   supply  10%   (token id 15)
+  USDT0   supply  10%   (token id 17)
+simulation ok
+
+Set this emissions config on CAUTPSQDAJEUV5XEU3EXFVYRGDJLEJGVTFJCFZCSPTDCREAMZ573VF4D? [y/N] == 2. set_emissions_config (sends)
+Simulating transaction…
+Signing transaction: 8740c22cf015f39a42be54cf01b7a4576bba7b4d5bc7c99356d36d2e30902b4f
+Sending transaction…
+Transaction submitted successfully!
+https://stellar.expert/explorer/public/tx/8740c22cf015f39a42be54cf01b7a4576bba7b4d5bc7c99356d36d2e30902b4f
+
+== 3. verify
+stored: PoolEmis,"{""1"":2000000,""2"":3000000,""4"":1500000,""15"":1000000,""17"":1000000,""19"":1500000}",65327826,67401425
+matches
+
+Next: step 4 (BLNT LP backstop deposit), then backstop add_reward.
+```
