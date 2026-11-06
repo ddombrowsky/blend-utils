@@ -142,13 +142,15 @@ Salt is 32 random bytes as 64 hex chars:
         --backstop_take_rate 2000000 \
         --max_positions 6 \
         --min_collateral 50000000 \
-        --backstop_config '[{"asset":"BlntXlm","take_rate_weight":4},{"asset":"BlntUsdc","take_rate_weight":3},{"asset":"Usdc","take_rate_weight":2}]' \
+        --backstop_config '[{"asset":"BlntXlm","take_rate_weight":4},{"asset":"BlntUsdc","take_rate_weight":3}]' \
         --access_controller null
 
     POOL=<returned address>
+    (deployed 2026-11-05: YieldBlent CAUTPSQDAJEUV5XEU3EXFVYRGDJLEJGVTFJCFZCSPTDCREAMZ573VF4D)
 
-(take rate and tiers above copy the existing BLNT pool; the ybx v2 pool
-has a take rate of 0.)
+(take rate and tiers above copy the existing BLNT pool, minus its Usdc
+tier: DECISION 2026-11-05, BLNT LP tiers only.  The ybx v2 pool has a
+take rate of 0.)
 
 
 2. Reserves: queue_set_reserve + set_reserve (for each asset)

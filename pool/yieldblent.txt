@@ -1,12 +1,6 @@
 YieldBlent Pool
 ---------------
 
-todo:
-
-* [X] add solvBTC CBIJBDNZNF4X35BJ4FFZWCDBSCKOP5NB4PLG4SNENRMLAPYG4P5FM6VN
-* [ ] deploy and test oracle to pubnet
-* [ ] generate script for step-by-step contract deployment
-
 ------
 Oracle
 ------
@@ -147,4 +141,55 @@ CETES   {"price":"641013","timestamp":1793885100}
 PYUSD   {"price":"9998402","timestamp":1793885100}
 USDT0   {"price":"9995177","timestamp":1793885100}
 SolvBTC {"price":"773858113466","timestamp":1793885100}
+```
+
+
+------
+Pool
+------
+
+See deploy script: `deploy-pool-yieldblent.sh`
+
+Output:
+
+```
+== 0. oracle check (every reserve needs a price)
+base {"Stellar":"CCW67TSZV3SSS2HXMBQ5JFGCKJNXKZM7UQUWUZPUTHXSTZLEO7SJMI75"} decimals 7 max_age 900
+[{"address":"CALI2BYU2JE6WVRUFYTS6MSBNEHGJ35P4AVCZYF3B6QOE3QKOB2PLE6M","decimals":14,"index":0,"resolution":300}]
+USDC    {"price":"10000000","timestamp":1793923501}
+XLM     {"price":"1526695","timestamp":1793923200}
+EURC    {"price":"11131487","timestamp":1793923200}
+AQUA    {"price":"2587","timestamp":1793923200}
+USDGLO  {"price":"9998817","timestamp":1793923200}
+USTRY   {"price":"10780550","timestamp":1793923200}
+CETES   {"price":"634661","timestamp":1793923200}
+PYUSD   {"price":"9998327","timestamp":1793923200}
+USDT0   {"price":"9995176","timestamp":1793923200}
+SolvBTC {"price":"733209249128","timestamp":1793923200}
+
+== 1. simulate deploy
+admin GDJSH2NU2WF6J4P5DL4522DUCABWSTZOKFQ7BHBCFYQ3QKC6FRYWP6OL (xbull)
+name YieldBlent, oracle CDN7JD6SP32RZHB3DHK4S4AWCCQF6GYIUO455UCR4RGRZILZDRD24N36
+take rate 2000000, max_positions 6, min_collateral 50000000
+backstop [{"asset":"BlntXlm","take_rate_weight":4},{"asset":"BlntUsdc","take_rate_weight":3}]
+CAKLFWAHB2RIYRBSPUL6EH43AIQ5ILBEM7HTMWYSJRL7PHZQ676KMCV5 - Success - Event: PoolFactoryDeployEvent (deploy), pool_address: "CAUTPSQDAJEUV5XEU3EXFVYRGDJLEJGVTFJCFZCSPTDCREAMZ573VF4D"
+pool address would be CAUTPSQDAJEUV5XEU3EXFVYRGDJLEJGVTFJCFZCSPTDCREAMZ573VF4D
+
+backstop_config and oracle can't be changed later.  Deploy? [y/N] y
+== 2. deploy (sends)
+ Simulating transaction…
+Signing transaction: 891230f2cd0fc6a688e279add56f76ffd7f4ae95aa92204ca72f54bd8cc4f8f1
+Sending transaction…
+Transaction submitted successfully!
+https://stellar.expert/explorer/public/tx/891230f2cd0fc6a688e279add56f76ffd7f4ae95aa92204ca72f54bd8cc4f8f1
+CAKLFWAHB2RIYRBSPUL6EH43AIQ5ILBEM7HTMWYSJRL7PHZQ676KMCV5 - Success - Event: PoolFactoryDeployEvent (deploy), pool_address: "CAUTPSQDAJEUV5XEU3EXFVYRGDJLEJGVTFJCFZCSPTDCREAMZ573VF4D"
+POOL=CAUTPSQDAJEUV5XEU3EXFVYRGDJLEJGVTFJCFZCSPTDCREAMZ573VF4D
+== 3. verify
+is_pool:   true
+backstop:  {"access_controller":null,"tiers":[{"asset":"BlntXlm","take_rate_weight":4},{"asset":"BlntUsdc","take_rate_weight":3}]}
+config:    {"bstop_rate":2000000,"max_positions":6,"min_collateral":"50000000","oracle":"CDN7JD6SP32RZHB3DHK4S4AWCCQF6GYIUO455UCR4RGRZILZDRD24N36","status":6}
+admin:     "GDJSH2NU2WF6J4P5DL4522DUCABWSTZOKFQ7BHBCFYQ3QKC6FRYWP6OL"
+
+Expect status 6 (setup).  Record POOL=CAUTPSQDAJEUV5XEU3EXFVYRGDJLEJGVTFJCFZCSPTDCREAMZ573VF4D in yieldblent.txt and
+pool-deploy.txt, then step 2 (reserves).
 ```
