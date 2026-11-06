@@ -193,3 +193,10 @@ admin:     "GDJSH2NU2WF6J4P5DL4522DUCABWSTZOKFQ7BHBCFYQ3QKC6FRYWP6OL"
 Expect status 6 (setup).  Record POOL=CAUTPSQDAJEUV5XEU3EXFVYRGDJLEJGVTFJCFZCSPTDCREAMZ573VF4D in yieldblent.txt and
 pool-deploy.txt, then step 2 (reserves).
 ```
+
+------
+reserves
+------
+
+See deploy script: `set-reserves-yieldblent.sh`
+
