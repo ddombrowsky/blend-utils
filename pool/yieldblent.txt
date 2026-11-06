@@ -245,3 +245,35 @@ matches
 
 Next: step 4 (BLNT LP backstop deposit), then backstop add_reward.
 ```
+
+-----
+Deposit
+-----
+
+```
+== 4. verify
+backstop pool_data: {"active_value":"1569556","q4w_pct":"0","tiers":[{"asset":"BlntXlm","blnt_emission_eligible":true,"shares":"10000000","take_rate_weight":4,"token":"CA5HX3D47PQZWC2E7VWXCKH4534P2NOJEOIXAWU47MI4QV2FQUYY3FLC","tokens":"10000000","value":"778116"},{"asset":"BlntUsdc","blnt_emission_eligible":true,"shares":"10000000","take_rate_weight":3,"token":"CDQMIKIHKA5UY3FQJ2UDTLNX3GOPD3GPNZWSPTOBVOHEUMQJQXOPC7Y3","tokens":"10000000","value":"791440"}]}
+FirstLoss (BlntXlm) shares: 10000000
+SecondLoss (BlntUsdc) shares: 10000000
+in reward zone: yes
+reward zone: ["CAUTPSQDAJEUV5XEU3EXFVYRGDJLEJGVTFJCFZCSPTDCREAMZ573VF4D","CACSQWCMKG45TUHCQ3LXHOB7YEEJH4W376ZHQPXH2IZ3TE4NJHFZMCY7"]
+```
+
+------
+status
+------
+
+Finally, set status: ./set-status-yieldblent.sh
+
+
+```
+CAUTPSQDAJEUV5XEU3EXFVYRGDJLEJGVTFJCFZCSPTDCREAMZ573VF4D - Success - Event: SetStatusEvent (set_status), new_status: 0
+
+Simulating transaction…
+Signing transaction: 88bd6e001e78bb1ea24ff722831730c36524ad9d3a8c997c6c73e4a181d1f7ae
+Sending transaction…
+Transaction submitted successfully!
+https://stellar.expert/explorer/public/tx/88bd6e001e78bb1ea24ff722831730c36524ad9d3a8c997c6c73e4a181d1f7ae
+CAUTPSQDAJEUV5XEU3EXFVYRGDJLEJGVTFJCFZCSPTDCREAMZ573VF4D - Success - Event: SetStatusEvent (set_status), new_status: 0
+{"bstop_rate":2000000,"max_positions":6,"min_collateral":"50000000","oracle":"CDN7JD6SP32RZHB3DHK4S4AWCCQF6GYIUO455UCR4RGRZILZDRD24N36","status":0}
+```
