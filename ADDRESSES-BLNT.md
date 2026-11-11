@@ -11,5 +11,10 @@
 * lockup backfill example (from lofi): https://stellar.expert/explorer/public/contract/CCMJJSPV4D6IBCB2FYMQRV4RFPJUZCBJX26Z26MI62HB46WTRSOX3ZEU
 * lockup backfill manager wasm: 7b87cdcb7e9c5701c06a9d9393b277ed324a32f070c396a8fe5317c3083b6b47
 
-* backstop manager example (from lofi): https://stellar.expert/explorer/public/contract/CAJUD2IQOVKPDZFJZEX2MSG7PKIE2NF4CJQ2ERBU7VF52SEM5GQL7XEB
+* backstop manager (BLNT v3, with harvest): https://stellar.expert/explorer/public/contract/CAJUD2IQOVKPDZFJZEX2MSG7PKIE2NF4CJQ2ERBU7VF52SEM5GQL7XEB
 * backstop manager wasm: 3c7e6757681b4bead581f0772637a6e834d6007e69b0a51d198075db41112269
+  (BLNT-Protocol/backstop-manager release v1.0.1 @ 5c47084, StellarExpert attested build, cli 27.0.0)
+
+* YieldBlent backstop manager: CA7AO4OH5XVSVLGMWREBGASI3TQ4GIYAZGN6E5P3RLOENRRSCWX27TFE
+  (owner xbull, manager claudio scope 0; backstop CAHCUK…, pool CAUTPS… YieldBlent;
+  pool/deploy-backstop-manager-yieldblent.sh, CLI config pool/backstop-manager-yieldblent.env)
