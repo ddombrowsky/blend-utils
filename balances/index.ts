@@ -4,10 +4,12 @@ import {
   BackstopPoolV2,
   BackstopPoolUser,
   BackstopPoolUserEst,
+  BackstopPoolUserV3,
+  BackstopPoolV3,
   PoolV1,
   PoolV2,
+  PoolV3,
   Network,
-  PositionsEstimate
 } from '@blend-capital/blend-sdk';
 
 const network: Network = {
@@ -31,15 +33,15 @@ const assetLookup = {
 };
 
 const poolContracts = [
-  {'id':'CAJJZSGMMM3PD7N33TAPHGBUGTB43OC73HVIK2L2G6BNGGGYOSSYBXBD','ver':1},
-  {'id':'CCCCIQSDILITHMM7PBSLVDT5MISSY7R26MNZXCX4H7J5JQ5FPIYOGYFS','ver':1},
-  {'id':'CDMAVJPFXPADND3YRL4BSM3AKZWCTFMX27GLLXCML3PD62HEQS5FPVAI','ver':1},
-  {'id':'CAE7QVOMBLZ53CDRGK3UNRRHG5EZ5NQA7HHTFASEMYBWHG6MDFZTYHXC','ver':1},
+  {'id':'CAUTPSQDAJEUV5XEU3EXFVYRGDJLEJGVTFJCFZCSPTDCREAMZ573VF4D','ver':3},
+  {'id':'CACSQWCMKG45TUHCQ3LXHOB7YEEJH4W376ZHQPXH2IZ3TE4NJHFZMCY7','ver':3},
 ];
-const backstopContract = [
-  'CAO3AGAMZVRMHITL36EJ2VZQWKYRPWMQAPDQD5YEOF3GIF7T44U4JAL3',
-  'CAQQR5SWBXKIGZKPBZDH3KM5GQ5GUTPKB7JAFCINLZBC5WXPJKRG3IM7'
-];
+// indexed by pool version
+const backstopContract: Record<number, string> = {
+  1: 'CAO3AGAMZVRMHITL36EJ2VZQWKYRPWMQAPDQD5YEOF3GIF7T44U4JAL3',
+  2: 'CAQQR5SWBXKIGZKPBZDH3KM5GQ5GUTPKB7JAFCINLZBC5WXPJKRG3IM7',
+  3: 'CAHCUKBPTW5DR5RNXOHCTJD5U76A6EEZXYZAQFRQEEQRXQ3CRUZ6Z3MO',
+};
 
 function getSymbol(assetId: string) : string {
   let sym = assetLookup[assetId];
@@ -62,99 +64,87 @@ const replacer = (key: any, value: any) => {
   }
 };
 
-function pb(x: BigInt): number {
-    return parseInt(x.toString()) / 10**7;
+// Format a fixed-point bigint exactly, using all `decimals` digits.
+function fmt(x: bigint, decimals: number): string {
+  const neg = x < 0n;
+  const abs = neg ? -x : x;
+  const base = 10n ** BigInt(decimals);
+  const whole = abs / base;
+  const frac = (abs % base).toString().padStart(decimals, '0');
+  return `${neg ? '-' : ''}${whole}${decimals > 0 ? '.' + frac : ''}`;
 }
 
 async function display(userPub: string, poolId: string, version: number) {
   let pool;
-  if (version==0) {
-    pool = await PoolV1.load(
-      network,
-      poolId);
+  if (version == 1) {
+    pool = await PoolV1.load(network, poolId);
+  } else if (version == 2) {
+    pool = await PoolV2.load(network, poolId);
   } else {
-    pool = await PoolV2.load(
-      network,
-      poolId);
+    pool = await PoolV3.load(network, poolId);
   }
-  const pool_oracle = await pool.loadOracle();
   const pool_user = await pool.loadUser(userPub);
-  const user_est = PositionsEstimate.build(
-    pool, pool_oracle, pool_user.positions
-  );
 
-  //console.log(JSON.stringify(user, replacer, 2));
   console.log(`Balances for ${pool_user.userId} ->`);
 
   console.log('  Liabilities ->');
   for (let reserve of pool.reserves.values()) {
     let sym = getSymbol(reserve.assetId);
-    let val = pool_user.getLiabilitiesFloat(reserve);
-    if (val > 0) {
-      console.log(`\t${sym}:\t-${val}`);
+    let val = pool_user.getLiabilities(reserve);
+    if (val > 0n) {
+      console.log(`	${sym}:	-${fmt(val, reserve.config.decimals)}`);
     }
   }
 
   console.log('  Collateral ->');
   for (let reserve of pool.reserves.values()) {
     let sym = getSymbol(reserve.assetId);
-    let val = pool_user.getCollateralFloat(reserve);
-    if (val > 0) {
-      console.log(`\t${sym}:\t${val}`);
+    let val = pool_user.getCollateral(reserve);
+    if (val > 0n) {
+      console.log(`	${sym}:	${fmt(val, reserve.config.decimals)}`);
     }
   }
-
 }
 
 async function displayBackstop(
   userPub: string, poolId: string, version: number)
 {
-  let tokens = 0;
-  if (version==0) {
-    tokens = await displayBackstopV1(userPub, poolId);
-  } else {
-    tokens = await displayBackstopV2(userPub, poolId);
+  if (version == 3) {
+    await displayBackstopV3(userPub, poolId);
+    return;
   }
+  const tokens = await displayBackstopV1V2(userPub, poolId, version);
   console.log(`backstop:\t${tokens}`);
 }
 
-async function displayBackstopV1(
-  userPub: string, poolId: string)
-{
-  const backstop = await Backstop.load(
-    network,
-    backstopContract[0]
-  );
-  const backstop_pool = await BackstopPoolV1.load(
-    network, backstopContract[0], poolId
-  );
-  const userBackstop = await BackstopPoolUser.load(
-    network,
-    backstopContract[0],
-    poolId,
-    userPub);
-  const backstop_pool_user_est = BackstopPoolUserEst.build(
-    backstop, backstop_pool, userBackstop
-  );
+async function displayBackstopV3(userPub: string, poolId: string) {
+  const backstopId = backstopContract[3];
+  const backstop_pool = await BackstopPoolV3.load(network, backstopId, poolId);
+  const user = await BackstopPoolUserV3.load(network, backstopId, poolId, userPub);
 
-  return backstop_pool_user_est.tokens;
+  for (const tier of backstop_pool.configuredTiers) {
+    const tierPool = backstop_pool.tier(tier);
+    const shares = user.balance(tier).shares;
+    const queued = user.queuedShares(tier);
+    if (shares == 0n && queued == 0n) continue;
+    const tokens = tierPool.sharesToTokens(shares);
+    const queuedTokens = tierPool.sharesToTokens(queued);
+    // all backstop tier assets (BLNT LP tokens, USDC, XLM) use 7 decimals
+    console.log(`backstop ${tier} (${tierPool.data.asset}):\t${fmt(tokens, 7)}` +
+      (queued > 0n ? `\t(queued: ${fmt(queuedTokens, 7)})` : ''));
+  }
 }
 
-async function displayBackstopV2(
-  userPub: string, poolId: string)
+async function displayBackstopV1V2(
+  userPub: string, poolId: string, version: number)
 {
-  const backstop = await Backstop.load(
-    network,
-    backstopContract[1]
-  );
-  const backstop_pool = await BackstopPoolV2.load(
-    network, backstopContract[1], poolId
-  );
+  const backstopId = backstopContract[version];
+  const backstop = await Backstop.load(network, backstopId);
+  const backstop_pool = version == 1
+    ? await BackstopPoolV1.load(network, backstopId, poolId)
+    : await BackstopPoolV2.load(network, backstopId, poolId);
   const userBackstop = await BackstopPoolUser.load(
-    network,
-    backstopContract[1],
-    poolId,
-    userPub);
+    network, backstopId, poolId, userPub);
   const backstop_pool_user_est = BackstopPoolUserEst.build(
     backstop, backstop_pool, userBackstop
   );
