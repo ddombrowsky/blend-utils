@@ -1,0 +1,52 @@
+
+[?2004l== 1. build
+ℹ️  CARGO_BUILD_RUSTFLAGS=--remap-path-prefix=/home/davek/.cargo/registry/src= SOROBAN_SDK_BUILD_SYSTEM_SUPPORTS_SPEC_SHAKING_V2=1 STELLAR_CLI_VERSION=30.0.1 cargo rustc --locked --manifest-path=Cargo.toml --crate-type=cdylib --target=wasm32v1-none --release
+[1m[92m    Finished[0m ]8;;https://doc.rust-lang.org/cargo/reference/profiles.html#default-profiles\`release` profile [optimized]]8;;\ target(s) in 0.56s
+ℹ️  Build Summary:
+    Wasm File: target/optimized/covered_controller.wasm (2255 bytes optimized (original size was 2538 bytes))
+    Wasm Hash: b76964d5dbc95a6e531dae122054a838b1bcd603a99313d7577094c581e11efc
+    Wasm Size: 2255 bytes optimized (original size was 2538 bytes)
+    Exported Functions: 5 found
+      • __constructor
+      • admin
+      • is_backstop_depositor
+      • permissions
+      • set_backstop_depositor
+✅ Build Complete
+
+wasm sha256 b76964d5dbc95a6e531dae122054a838b1bcd603a99313d7577094c581e11efc
+
+== 2. fund multisig check
+  signer GC4CBLBC6RHI5D6D3MUEOD32PO36H3DLAQI3PQW7UALIWW7XUWPQZBRV weight 1
+  signer GDA5JJFUAGFBNT4BMEGASY7EWBJFOWL2VBXMYY6QKCEOZMXHX6BBXYOB weight 1
+  signer GDMCUWYGHGOM2AIWVFJVW6PW3Y77CL5BSIF67BKHOMDEZMCXHFQW7VTK weight 1
+  thresholds {'low_threshold': 2, 'med_threshold': 2, 'high_threshold': 2}
+
+== 3. address
+controller address will be CA5QQDOQBJ6DVPPET7HTBXUJIWZ6NEXDBBNGNNLN4LOXCCCC6MHTIBY5
+
+admin GDA5JJFUAGFBNT4BMEGASY7EWBJFOWL2VBXMYY6QKCEOZMXHX6BBXYOB (fund multisig), not upgradeable, admin can't be changed.
+Upload and deploy? [y/N] y
+== 4. upload + deploy (sends)
+ℹ️  Simulating transaction…
+ℹ️  Signing transaction: 16c142a5b1e27e9329b91c84556e7e1b3461705f69c85cdf15836478054a073a
+🌎 Sending transaction…
+✅ Transaction submitted successfully!
+🔗 https://stellar.expert/explorer/public/tx/16c142a5b1e27e9329b91c84556e7e1b3461705f69c85cdf15836478054a073a
+wasm hash b76964d5dbc95a6e531dae122054a838b1bcd603a99313d7577094c581e11efc
+ℹ️  Deploying contract using wasm hash b76964d5dbc95a6e531dae122054a838b1bcd603a99313d7577094c581e11efc
+ℹ️  Simulating transaction…
+ℹ️  Signing transaction: eb8e48a1c2e71559e32a87704ddd62a7ff71aabcab2deccb23430b71d8d8f037
+🌎 Sending transaction…
+✅ Transaction submitted successfully!
+🔗 https://stellar.expert/explorer/public/tx/eb8e48a1c2e71559e32a87704ddd62a7ff71aabcab2deccb23430b71d8d8f037
+🔗 https://lab.stellar.org/r/mainnet/contract/CA5QQDOQBJ6DVPPET7HTBXUJIWZ6NEXDBBNGNNLN4LOXCCCC6MHTIBY5
+✅ Deployed!
+CA5QQDOQBJ6DVPPET7HTBXUJIWZ6NEXDBBNGNNLN4LOXCCCC6MHTIBY5
+== 5. verify
+admin:       "GDA5JJFUAGFBNT4BMEGASY7EWBJFOWL2VBXMYY6QKCEOZMXHX6BBXYOB"
+permissions: 3   (expect 3)
+
+Next: ./deploy-pool-covered.sh
+
+Sat Nov 14 07:10:31 PM EST 2026
