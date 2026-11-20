@@ -1,0 +1,43 @@
+== 0. oracle check (every reserve needs a price)
+base {"Stellar":"CCW67TSZV3SSS2HXMBQ5JFGCKJNXKZM7UQUWUZPUTHXSTZLEO7SJMI75"} decimals 7 max_age 900
+[{"address":"CALI2BYU2JE6WVRUFYTS6MSBNEHGJ35P4AVCZYF3B6QOE3QKOB2PLE6M","decimals":14,"index":0,"resolution":300}]
+USDC    {"price":"10000000","timestamp":1794963592}
+XLM     {"price":"1412768","timestamp":1794963300}
+EURC    {"price":"10904399","timestamp":1794963300}
+AQUA    {"price":"2329","timestamp":1794963300}
+USDGLO  {"price":"9999432","timestamp":1794963300}
+USTRY   {"price":"10782921","timestamp":1794963300}
+CETES   {"price":"647606","timestamp":1794963300}
+PYUSD   {"price":"9997975","timestamp":1794963300}
+USDT0   {"price":"9995221","timestamp":1794963300}
+SolvBTC {"price":"638090949600","timestamp":1794963300}
+
+== 0b. controller check (must be deployed, admin = fund)
+controller CDAXZS3UGQNWNVKEDZZI5A6L2JN7QRNL7ZAZ436LCRF3IEA3JBPW77PF, admin GDA5JJFUAGFBNT4BMEGASY7EWBJFOWL2VBXMYY6QKCEOZMXHX6BBXYOB
+
+== 1. simulate deploy
+admin GDJSH2NU2WF6J4P5DL4522DUCABWSTZOKFQ7BHBCFYQ3QKC6FRYWP6OL (xbull)
+name Blent Covered, oracle CDN7JD6SP32RZHB3DHK4S4AWCCQF6GYIUO455UCR4RGRZILZDRD24N36
+take rate 5000000, max_positions 4, min_collateral 50000000
+backstop [{"asset":"Usdc","take_rate_weight":1}]
+access_controller CDAXZS3UGQNWNVKEDZZI5A6L2JN7QRNL7ZAZ436LCRF3IEA3JBPW77PF
+📅 CAKLFWAHB2RIYRBSPUL6EH43AIQ5ILBEM7HTMWYSJRL7PHZQ676KMCV5 - Success - Event: PoolFactoryDeployEvent (deploy), pool_address: "CCH3BNZWTTBB2AKX6NT5OGKQSWP4UNBIKRTRMRDKKJLPMFKULHQZC3XD"
+pool address would be CCH3BNZWTTBB2AKX6NT5OGKQSWP4UNBIKRTRMRDKKJLPMFKULHQZC3XD
+
+== 2. deploy (sends)
+ℹ️ Simulating transaction…
+ℹ️ Signing transaction: 537162f8fcd93974eb7b11a9abffd045c81af1286d0f57747f0958351c0c8f8c
+🌎 Sending transaction…
+✅ Transaction submitted successfully!
+🔗 https://stellar.expert/explorer/public/tx/537162f8fcd93974eb7b11a9abffd045c81af1286d0f57747f0958351c0c8f8c
+📅 CAKLFWAHB2RIYRBSPUL6EH43AIQ5ILBEM7HTMWYSJRL7PHZQ676KMCV5 - Success - Event: PoolFactoryDeployEvent (deploy), pool_address: "CCH3BNZWTTBB2AKX6NT5OGKQSWP4UNBIKRTRMRDKKJLPMFKULHQZC3XD"
+POOL=CCH3BNZWTTBB2AKX6NT5OGKQSWP4UNBIKRTRMRDKKJLPMFKULHQZC3XD
+== 3. verify
+is_pool:   true
+backstop:  {"access_controller":"CDAXZS3UGQNWNVKEDZZI5A6L2JN7QRNL7ZAZ436LCRF3IEA3JBPW77PF","tiers":[{"asset":"Usdc","take_rate_weight":1}]}
+config:    {"bstop_rate":5000000,"max_positions":4,"min_collateral":"50000000","oracle":"CDN7JD6SP32RZHB3DHK4S4AWCCQF6GYIUO455UCR4RGRZILZDRD24N36","status":6}
+admin:     "GDJSH2NU2WF6J4P5DL4522DUCABWSTZOKFQ7BHBCFYQ3QKC6FRYWP6OL"
+
+Expect status 6 (setup).  Next: ./set-reserves-covered.sh
+exit 0
+Tue Nov 17 08:00:53 PM EST 2026

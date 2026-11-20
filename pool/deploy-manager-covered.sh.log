@@ -1,0 +1,46 @@
+== 1. release wasm
+wasm sha256 db025cf4badff632cae84c30328b3671057179895537ad94973c41038eb8b86a
+ • rsver: 1.91.1 (Rust version)
+ • cliver: 27.0.0#5a7c5fe76530bf4248477ac812fc757146b98cc4
+ • source_repo: github:BLNT-Protocol/pool-status-admin
+ • home_domain: blnt.trade
+
+== 2. attestation
+attested: BLNT-Protocol/pool-status-admin @ 6e5130a42737582cd3586ebffbd2ef4953917edd (refs/tags/manager-v0.1.0), signed by stellar-expert/soroban-build-workflow/.github/workflows/release.yml
+
+== 3. fund multisig and operator
+  fund signer GC4CBLBC6RHI5D6D3MUEOD32PO36H3DLAQI3PQW7UALIWW7XUWPQZBRV weight 1
+  fund signer GDA5JJFUAGFBNT4BMEGASY7EWBJFOWL2VBXMYY6QKCEOZMXHX6BBXYOB weight 1
+  fund signer GDMCUWYGHGOM2AIWVFJVW6PW3Y77CL5BSIF67BKHOMDEZMCXHFQW7VTK weight 1
+  thresholds {'low_threshold': 2, 'med_threshold': 2, 'high_threshold': 2}
+  operator GAF6YOV7NXCTGR6U2CKZURLD5I7EB4AL5HLVYI3E3VR3C5A2FAY7LT43, XLM 5.0001000
+
+== 4. address
+manager address will be CCP7DMV4WCVPH2C6ZETXCBFXDPQRLN27CQEAHVILEFWUM7QCG6DMIVDQ
+
+owner    GDA5JJFUAGFBNT4BMEGASY7EWBJFOWL2VBXMYY6QKCEOZMXHX6BBXYOB (fund multisig; can never change)
+operator GAF6YOV7NXCTGR6U2CKZURLD5I7EB4AL5HLVYI3E3VR3C5A2FAY7LT43 (keeper; set_status only; owner can replace)
+not upgradeable, no ownership transfer, no renounce.
+== 5. upload + deploy (sends)
+ℹ️ Simulating transaction…
+ℹ️ Signing transaction: 8fdd5a006786d268158d82bd5b582925918e04fe43b79b3e9f2b753b89898e98
+🌎 Sending transaction…
+✅ Transaction submitted successfully!
+🔗 https://stellar.expert/explorer/public/tx/8fdd5a006786d268158d82bd5b582925918e04fe43b79b3e9f2b753b89898e98
+wasm hash db025cf4badff632cae84c30328b3671057179895537ad94973c41038eb8b86a
+ℹ️ Deploying contract using wasm hash db025cf4badff632cae84c30328b3671057179895537ad94973c41038eb8b86a
+ℹ️ Simulating transaction…
+ℹ️ Signing transaction: dd899382a5c838e705044dccac1edac1cd871e145f2860bed23c3b8591ee18e5
+🌎 Sending transaction…
+✅ Transaction submitted successfully!
+🔗 https://stellar.expert/explorer/public/tx/dd899382a5c838e705044dccac1edac1cd871e145f2860bed23c3b8591ee18e5
+🔗 https://lab.stellar.org/r/mainnet/contract/CCP7DMV4WCVPH2C6ZETXCBFXDPQRLN27CQEAHVILEFWUM7QCG6DMIVDQ
+✅ Deployed!
+CCP7DMV4WCVPH2C6ZETXCBFXDPQRLN27CQEAHVILEFWUM7QCG6DMIVDQ
+== 6. verify
+owner:    "GDA5JJFUAGFBNT4BMEGASY7EWBJFOWL2VBXMYY6QKCEOZMXHX6BBXYOB"   (expect "GDA5JJFUAGFBNT4BMEGASY7EWBJFOWL2VBXMYY6QKCEOZMXHX6BBXYOB")
+operator: "GAF6YOV7NXCTGR6U2CKZURLD5I7EB4AL5HLVYI3E3VR3C5A2FAY7LT43"   (expect "GAF6YOV7NXCTGR6U2CKZURLD5I7EB4AL5HLVYI3E3VR3C5A2FAY7LT43")
+
+Next: ./propose-admin-covered.sh
+exit 0
+Thu Nov 19 05:19:45 PM EST 2026

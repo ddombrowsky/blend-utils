@@ -1,0 +1,65 @@
+== 0. pool state
+config   {"bstop_rate":5000000,"max_positions":4,"min_collateral":"50000000","oracle":"CDN7JD6SP32RZHB3DHK4S4AWCCQF6GYIUO455UCR4RGRZILZDRD24N36","status":6}
+reserves []
+
+== 1. checks + simulate queue_set_reserve
+XLM      index 0, decimals 7, price {"price":"1411322","timestamp":1794963600}, simulation ok
+USTRY    index 1, decimals 7, price {"price":"10782921","timestamp":1794963600}, simulation ok
+USDC     index 2, decimals 7, price {"price":"10000000","timestamp":1794963717}, simulation ok
+
+== 2. queue_set_reserve + set_reserve (sends)
+-- XLM
+ℹ️ Simulating transaction…
+ℹ️ Signing transaction: d6ed16e412369050a4d3e3e4bec8b8ff013d7ceed86c934833a5310ea7474808
+🌎 Sending transaction…
+✅ Transaction submitted successfully!
+🔗 https://stellar.expert/explorer/public/tx/d6ed16e412369050a4d3e3e4bec8b8ff013d7ceed86c934833a5310ea7474808
+📅 CCH3BNZWTTBB2AKX6NT5OGKQSWP4UNBIKRTRMRDKKJLPMFKULHQZC3XD - Success - Event: QueueSetReserveEvent (queue_set_reserve), admin: "GDJSH2NU2WF6J4P5DL4522DUCABWSTZOKFQ7BHBCFYQ3QKC6FRYWP6OL", asset: "CAS3J7GYLGXMF6TDJBBYYSE3HQ6BBSMLNUQ34T6TZMYMW2EVH34XOWMA", metadata: {"c_factor":7000000,"decimals":7,"enabled":true,"index":0,"l_factor":7000000,"max_util":7000000,"r_base":100000,"r_one":400000,"r_three":50000000,"r_two":3000000,"reactivity":20,"supply_cap":"1500000000","util":5000000}
+
+ℹ️ Simulating transaction…
+ℹ️ Signing transaction: 1d7946d86daee5b56c511e7f12fe0de164027208348ede2eb5f442e53f0d95d2
+🌎 Sending transaction…
+✅ Transaction submitted successfully!
+🔗 https://stellar.expert/explorer/public/tx/1d7946d86daee5b56c511e7f12fe0de164027208348ede2eb5f442e53f0d95d2
+📅 CCH3BNZWTTBB2AKX6NT5OGKQSWP4UNBIKRTRMRDKKJLPMFKULHQZC3XD - Success - Event: SetReserveEvent (set_reserve), asset: "CAS3J7GYLGXMF6TDJBBYYSE3HQ6BBSMLNUQ34T6TZMYMW2EVH34XOWMA", index: 0
+XLM -> index 0
+-- USTRY
+ℹ️ Simulating transaction…
+ℹ️ Signing transaction: da42746ea91c3deda8c2a7e23607bda2a0e8832dcddcb74794dcf03463b5ca54
+🌎 Sending transaction…
+✅ Transaction submitted successfully!
+🔗 https://stellar.expert/explorer/public/tx/da42746ea91c3deda8c2a7e23607bda2a0e8832dcddcb74794dcf03463b5ca54
+📅 CCH3BNZWTTBB2AKX6NT5OGKQSWP4UNBIKRTRMRDKKJLPMFKULHQZC3XD - Success - Event: QueueSetReserveEvent (queue_set_reserve), admin: "GDJSH2NU2WF6J4P5DL4522DUCABWSTZOKFQ7BHBCFYQ3QKC6FRYWP6OL", asset: "CBLV4ATSIWU67CFSQU2NVRKINQIKUZ2ODSZBUJTJ43VJVRSBTZYOPNUR", metadata: {"c_factor":8000000,"decimals":7,"enabled":true,"index":1,"l_factor":8000000,"max_util":8000000,"r_base":100000,"r_one":200000,"r_three":50000000,"r_two":1000000,"reactivity":20,"supply_cap":"250000000","util":5000000}
+
+ℹ️ Simulating transaction…
+ℹ️ Signing transaction: a97c431fb00c9e6b3a3b75c4cc3c7f9acd68607d9e153027c12fe087f2c3114c
+🌎 Sending transaction…
+✅ Transaction submitted successfully!
+🔗 https://stellar.expert/explorer/public/tx/a97c431fb00c9e6b3a3b75c4cc3c7f9acd68607d9e153027c12fe087f2c3114c
+📅 CCH3BNZWTTBB2AKX6NT5OGKQSWP4UNBIKRTRMRDKKJLPMFKULHQZC3XD - Success - Event: SetReserveEvent (set_reserve), asset: "CBLV4ATSIWU67CFSQU2NVRKINQIKUZ2ODSZBUJTJ43VJVRSBTZYOPNUR", index: 1
+USTRY -> index 1
+-- USDC
+ℹ️ Simulating transaction…
+ℹ️ Signing transaction: 4cab58e9ce4ee30415cca0eccda67f8ac123a934ec1e0f968e5d5fb8fa736ea6
+🌎 Sending transaction…
+✅ Transaction submitted successfully!
+🔗 https://stellar.expert/explorer/public/tx/4cab58e9ce4ee30415cca0eccda67f8ac123a934ec1e0f968e5d5fb8fa736ea6
+📅 CCH3BNZWTTBB2AKX6NT5OGKQSWP4UNBIKRTRMRDKKJLPMFKULHQZC3XD - Success - Event: QueueSetReserveEvent (queue_set_reserve), admin: "GDJSH2NU2WF6J4P5DL4522DUCABWSTZOKFQ7BHBCFYQ3QKC6FRYWP6OL", asset: "CCW67TSZV3SSS2HXMBQ5JFGCKJNXKZM7UQUWUZPUTHXSTZLEO7SJMI75", metadata: {"c_factor":9500000,"decimals":7,"enabled":true,"index":2,"l_factor":9500000,"max_util":9500000,"r_base":300000,"r_one":400000,"r_three":50000000,"r_two":1200000,"reactivity":20,"supply_cap":"400000000","util":8000000}
+
+ℹ️ Simulating transaction…
+ℹ️ Signing transaction: d39862130dec93d64242d99465bc53ab9ebe7781dceea5c37f00bc40ddcd2cfd
+🌎 Sending transaction…
+✅ Transaction submitted successfully!
+🔗 https://stellar.expert/explorer/public/tx/d39862130dec93d64242d99465bc53ab9ebe7781dceea5c37f00bc40ddcd2cfd
+📅 CCH3BNZWTTBB2AKX6NT5OGKQSWP4UNBIKRTRMRDKKJLPMFKULHQZC3XD - Success - Event: SetReserveEvent (set_reserve), asset: "CCW67TSZV3SSS2HXMBQ5JFGCKJNXKZM7UQUWUZPUTHXSTZLEO7SJMI75", index: 2
+USDC -> index 2
+
+== 3. verify
+reserves ["CAS3J7GYLGXMF6TDJBBYYSE3HQ6BBSMLNUQ34T6TZMYMW2EVH34XOWMA","CBLV4ATSIWU67CFSQU2NVRKINQIKUZ2ODSZBUJTJ43VJVRSBTZYOPNUR","CCW67TSZV3SSS2HXMBQ5JFGCKJNXKZM7UQUWUZPUTHXSTZLEO7SJMI75"]
+XLM      config matches
+USTRY    config matches
+USDC     config matches
+
+Next: fund account (step 3 of cover-reserve.txt), then ./deposit-backstop-covered.sh
+exit 0
+Tue Nov 17 08:04:24 PM EST 2026
