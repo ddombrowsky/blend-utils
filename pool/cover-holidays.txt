@@ -1,0 +1,28 @@
+# Blent Cover Reserve Fund: days the pool stays closed (ET).
+# Rule: closed if NYSE OR the banks (Federal Reserve) are closed;
+# NYSE 1 pm early closes kept.  Weekends are closed by cover-hours.sh.
+#   YYYY-MM-DD        closed all day
+#   YYYY-MM-DD HHMM   early close (ET)
+# Extend each year from NYSE's calendar and the Fed's holiday schedule.
+
+# 2026
+2026-11-26        # Thanksgiving (both)
+2026-11-27 1300   # NYSE early close
+2026-12-24 1300   # NYSE early close
+2026-12-25        # Christmas (both)
+
+# 2027
+2027-01-01        # New Year's Day (both)
+2027-01-18        # Martin Luther King Jr. Day (both)
+2027-02-15        # Washington's Birthday (both)
+2027-03-26        # Good Friday (NYSE)
+2027-05-31        # Memorial Day (both)
+2027-06-18        # Juneteenth, observed (NYSE; Fed open, Sat rule)
+2027-07-05        # Independence Day, observed (both)
+2027-09-06        # Labor Day (both)
+2027-10-11        # Columbus Day (Fed)
+2027-11-11        # Veterans Day (Fed)
+2027-11-25        # Thanksgiving (both)
+2027-11-26 1300   # NYSE early close
+2027-12-24        # Christmas, observed (NYSE; Fed open, Sat rule)
+# 2027-12-31 open: NYSE doesn't observe Sat New Year's on Friday
