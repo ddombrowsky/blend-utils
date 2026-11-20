@@ -1,0 +1,35 @@
+./go-live-covered.sh
+== 0. preflight
+config   {"bstop_rate":5000000,"max_positions":4,"min_collateral":"50000000","oracle":"CDN7JD6SP32RZHB3DHK4S4AWCCQF6GYIUO455UCR4RGRZILZDRD24N36","status":6}
+reserves 3
+backstop {"active_value":"100000000","q4w_pct":"0","tiers":[{"asset":"Usdc","blnt_emission_eligible":false,"shares":"100000000","take_rate_weight":1,"token":"CCW67TSZV3SSS2HXMBQ5JFGCKJN
+pool admin CCP7DMV4WCVPH2C6ZETXCBFXDPQRLN27CQEAHVILEFWUM7QCG6DMIVDQ
+manager owner GDA5JJFUAGFBNT4BMEGASY7EWBJFOWL2VBXMYY6QKCEOZMXHX6BBXYOB, operator GAF6YOV7NXCTGR6U2CKZURLD5I7EB4AL5HLVYI3E3VR3C5A2FAY7LT43
+operator XLM 5.0001000
+fund signers: [{"key":"GC4CBLBC","weight":1},{"key":"GDA5JJFU","weight":1},{"key":"GDMCUWYG","weight":1}]
+fund thresholds: {"low_threshold":2,"med_threshold":2,"high_threshold":2}
+
+deposits (USD):
+  CAS3J7GYLGXMF6TDJBBYYSE3HQ6BBSMLNUQ34T6TZMYMW2EVH34XOWMA          0.00
+  CBLV4ATSIWU67CFSQU2NVRKINQIKUZ2ODSZBUJTJ43VJVRSBTZYOPNUR          0.00
+  CCW67TSZV3SSS2HXMBQ5JFGCKJNXKZM7UQUWUZPUTHXSTZLEO7SJMI75          0.00
+deposits       0.00  x 0.9
+required       0.00
+fund          90.00  -> covered
+
+keeper install (/opt/blnt-keeper) vs this directory:
+  cover-hours.sh same
+  cover-holidays.txt same
+
+Before going on, confirm by hand:
+  * site live with the real pool, manager and fund addresses
+  * cover terms published
+Leave setup -> Admin Frozen (4)?  This starts the 7-day reserve timelock. [y/N] y
+== 1. freeze, as blnt-keeper (sends; sudo may ask for your password)
+🔗 https://stellar.expert/explorer/public/tx/a4e8a484908f423c98a72183a338999ef2fe636a8673569d2ef7ed76440db610
+2026-11-20T13:21:21-05:00 pool status -> 4
+== 2. verify
+config {"bstop_rate":5000000,"max_positions":4,"min_collateral":"50000000","oracle":"CDN7JD6SP32RZHB3DHK4S4AWCCQF6GYIUO455UCR4RGRZILZDRD24N36","status":4}
+
+Now: sudo ./setup-keeper.sh --cron [--mailto ADDR]
+The pool opens on the next tick in business hours if the cover check passes.

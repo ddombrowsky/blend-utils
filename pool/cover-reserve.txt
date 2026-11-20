@@ -1,0 +1,420 @@
+Blent Cover Reserve Fund: covered pool
+======================================
+
+A small, separate BLNT v3 pool (XLM, USTRY, USDC) whose deposits are
+covered against contract exploit and theft by an off-chain-code reserve
+account: the Blent Cover Reserve Fund.  General v3 deploy steps and
+reference numbers are in ../pool-deploy.txt; this file only records what
+is different for this pool.
+
+Status (2026-11-17): fund multisig set up (2-of-3, no USDC trustline
+yet).  Access controller v1.0.0 (verified build) deployed 2026-11-17 at
+CDAXZ...77PF (see "Controller" below).  Nothing else deployed.  Order:
+fund multisig (done) -> access controller (done) -> allowlist fund
+(done 2026-11-17, tx 4163ee84...; permissions(FUND) = 7) -> pool
+(done 2026-11-17, CCH3...C3XD, tx 537162f8..., name "Blent Covered"
+read back; see "Abandoned pool" in step 1) -> reserves (done 2026-11-17,
+configs read back) -> fund USDC -> backstop -> go live.
+
+Thu Nov 19 04:36:12 PM EST 2026: complete up to (not including) step 4
+
+Scripts (run in order, each simulates and asks before sending):
+    0  fund multisig: done 2026-11-14 (FUND below); USDC trustline done
+       2026-11-18 (tx 50a4b356...); 100 USDC still to send, see step 3
+    0b deploy-controller-covered.sh  controller, admin = FUND: done
+                                     2026-11-17
+    1  deploy-pool-covered.sh        deploy, status 6 (setup); refuses
+                                     unless the controller is deployed
+                                     DONE 2026-11-17 (tx 537162f8...)
+    2  set-reserves-covered.sh       XLM, USTRY, USDC (setup only: calls
+                                     the pool as xbull, which is no longer
+                                     admin; for later changes use
+                                     revise-caps-covered.sh)
+                                     DONE 2026-11-17 (log in
+                                     set-reserves-covered.sh.log)
+    3  add-trustline-covered.sh      USDC trustline on FUND (prints XDR
+                                     for refractor.space; 2 signatures),
+                                     then send FUND 100 USDC
+    3a add-depositor-covered.sh FUND allowlist the fund as backstop
+                                     depositor (prints XDR for
+                                     refractor.space; 2 fund signatures)
+                                     DONE 2026-11-17 (tx 4163ee84...)
+                                     (set-depositor-covered.sh <a> false
+                                     removes; never remove FUND)
+    4  deposit-backstop-covered.sh   10 USDC, FirstLoss, from FUND
+                                     DONE 2026-11-20 (tx f49eada4...;
+                                     100000000 shares, fund 90 USDC left)
+                                     (prints XDR for refractor.space;
+                                     2 fund signatures)
+    4b sudo ./setup-keeper.sh        keeper user blnt-keeper on the cron host:
+                                     operator key, root-owned scripts in
+                                     /opt/blnt-keeper; --cron adds the
+                                     cron entry (only after the manager is
+                                     pool admin and the operator funded)
+    4c deploy-manager-covered.sh     pool-status-manager v0.1.0 (release
+                                     wasm db025cf4...), owner FUND,
+                                     operator GAF6...LT43 ->
+                                     CCP7DMV4WCVPH2C6ZETXCBFXDPQRLN27CQEAHVILEFWUM7QCG6DMIVDQ
+                                     DONE 2026-11-19 (txs 8fdd5a00...
+                                     upload, dd899382... deploy; owner
+                                     and operator read back)
+    4d propose-admin-covered.sh      xbull proposes the manager as pool
+                                     admin (proposal kept 10 days)
+                                     DONE 2026-11-19 (tx 1a0cac33...);
+                                     proposal expires at ledger 65740952
+                                     (~2026-11-29)
+    4e fund accept_admin XDR         via Refractor; build only when no
+                                     other fund tx is pending (sequence)
+                                     DONE 2026-11-20 (tx f2a6d6ed...):
+                                     pool admin = manager CCP7...IVDQ;
+                                     xbull has no pool role
+    5  go-live-covered.sh            preflight, then setup -> Admin Frozen
+       cover-hours.sh tick           cron from then on
+
+
+Design rules (DECISIONS 2026-11-12)
+-----------------------------------
+
+Cover rule:
+    fund USDC  >=  0.90 x USD value of pool deposits
+    i.e. deposit limit = fund / 0.9   (90 USDC fund -> $100 of deposits)
+
+    "Deposits" = everything supplied to the pool (b_supply x b_rate),
+    priced by the pool's own oracle.  Borrowed-out funds still count:
+    they are still owed to suppliers.
+
+    "Fund USDC" = the USDC balance of the FUND classic account only.
+    The fund's backstop shares do NOT count: they sit inside the
+    contracts being covered and take bad debt first.
+
+Backstop is not covered (DECISION 2026-11-17; replaces the "cover 50%
+of backstop" future option).  Backstop deposits carry no cover.
+COVER_BACKSTOP in cover-hours.sh stays 0.
+
+The fund is the backstop (DECISION 2026-11-17).  FUND is the only
+allowlisted backstop depositor, so it receives the pool's whole backstop
+take rate (50%).  Earnings stay inside the backstop position until swept
+(see "Take-rate sweep"); each sweep raises the fund balance and so the
+deposit limit.  The fund's own backstop deposit is fund money at risk,
+not part of the reserve.  Removing FUND from the allowlist would let
+anyone force_queue_withdrawal its shares.
+
+Business hours (Eastern time, America/New_York, so DST is automatic):
+    open   Admin Active  (set_status 0)
+    closed Admin Frozen  (set_status 4)
+
+    Frozen, not On-Ice: On-Ice (2) only blocks new borrowing, deposits
+    would still go in.  Frozen blocks supply and borrowing; withdrawals,
+    repayments, liquidations and auction fills still work
+    (blnt-contracts-v3/docs/V2_SYSTEM_SPEC.md, V2-POOL-STATUS-001).
+    Status 4 is also immune to the permissionless update_status.
+
+    Hours (DECISION 2026-11-12): NYSE hours, Mon-Fri 09:30-16:00 ET.
+    "If the banks aren't open, the pool isn't open": closed on any NYSE
+    holiday OR Federal Reserve bank holiday (e.g. Good Friday is NYSE
+    only; Columbus and Veterans Day are Fed only), and closes at 13:00
+    on NYSE early-close days.  Dates in cover-holidays.txt, filled
+    through 2027; extend it every year.
+
+Opening check (every business day, before open):
+    The pool only opens if the cover rule holds at that moment.  If the
+    fund is short (prices rose, interest accrued, fund paid out), the
+    pool stays frozen until the fund is topped up or deposits fall.
+    It is not re-checked during the day: the supply caps bound intraday
+    growth (below).
+
+Supply caps (weekly):
+    Caps can't move daily: after setup, every reserve change waits 7
+    days (V2-POOL-CONFIG-001).  So caps are revised weekly, sized so the
+    total at current prices plus headroom for XLM moves stays under the
+    deposit limit expected a week out.  The daily check catches anything
+    the caps miss.
+
+Interest only (DECISION 2026-11-12): no BLNT emissions, plain USDC
+backstop tier only.  A pool with no BLNT LP tier has zero weight and can
+never enter the reward zone (V3_SYSTEM_SPEC.md 6.2), so neither the
+pool nor its backstop earns BLNT.  Immutable: emissions later = new pool.
+
+Access controller (DECISION 2026-11-12, reverses "option C rejected"):
+Multisig address: `GDA5JJFUAGFBNT4BMEGASY7EWBJFOWL2VBXMYY6QKCEOZMXHX6BBXYOB` . 
+backstop deposits must be allowlisted.  The only mechanism is the v3
+access controller, bound immutably at deploy, and the same controller
+gates supply/borrow (bits 0/1) and backstop deposit (bit 2)
+(backstop/src/access.rs, pool/src/access.rs).  No production controller
+exists in blnt-contracts-v3 (test mocks only), so we write one:
+    minimal, NOT upgradeable
+    __constructor(admin)
+    set_backstop_depositor(user, allowed)     admin only
+    permissions(pool, user) -> 3, or 7 if user is allowlisted
+        (supply + borrow open to everyone; ignores `pool`)
+    admin = the fund's 2-of-3 multisig, NOT the hot pool-admin key
+Controller failure blocks supply/borrow/backstop deposit only;
+withdraw, repay and Q4W never call it.  Removing a depositor lets anyone
+force_queue_withdrawal their shares.  Controller address and trust
+model must be disclosed on the site.
+Not used for the deposit limit (option C): caps + daily check do that.
+
+Controller: repo github.com/BLNT-Protocol/blnt-covered-backstop-controller
+(public, AGPL-3.0; the local copy covered-controller/ is superseded).
+Release v1.0.0 (2026-11-15) built by GitHub Actions via
+stellar-expert/soroban-build-workflow pinned @e43b241f (v25.1.0), with
+SEP-0055 attribution: source_repo=github:BLNT-Protocol/blnt-covered-
+backstop-controller and home_domain=blnt.trade in contractmetav0, plus a
+GitHub build attestation (verified: commit c1b87e3, tag v1.0.0, run
+43774837563).  Rust 1.91.1, soroban-sdk 27.0.3, CLI 25.1.0.
+    wasm sha256 9e18c6cc732f3e71df079b52586c7d10870b92df8823d4389ab9ae7a6d885a1b
+    CONTROLLER=CDAXZS3UGQNWNVKEDZZI5A6L2JN7QRNL7ZAZ436LCRF3IEA3JBPW77PF
+        (fixed salt from xbull; deployed 2026-11-17, txs 8c08dead...
+         upload and db7c807e... deploy; admin read back = FUND)
+    Abandoned: CA5QQDOQBJ6DVPPET7HTBXUJIWZ6NEXDBBNGNNLN4LOXCCCC6MHTIBY5,
+        deployed 2026-11-14 from a local build with no source_repo.
+        Same code, no attestation possible.  Nothing binds it.
+Verify a deployed copy:
+    gh attestation verify c.wasm --repo BLNT-Protocol/blnt-covered-backstop-controller \
+        --signer-workflow stellar-expert/soroban-build-workflow/.github/workflows/release.yml
+Functions: permissions(pool, user) -> 3 | 7; set_backstop_depositor
+(admin auth; fails NoChange #1 on a no-op); admin(); is_backstop_depositor.
+No upgrade, no admin transfer (the fund rotates its own classic signers).
+Storage TTLs are extended on use (to ~120 days when under ~30).  An
+expired allowlist entry makes that depositor's calls fail until restored;
+it never silently revokes them.
+Tested: unit tests (cargo test in covered-controller/) and, once, the
+built wasm against the real v3 pool, factory and backstop in
+blnt-contracts-v3/test-suites (temp test, not kept): non-allowlisted
+backstop deposit refused (#4); allowlisted deposit ok; forced Q4W
+refused while allowlisted, works after removal; anyone can supply;
+forced pool withdrawal of a supplier refused.
+
+(2026-11-12 block on the fund multisig cleared 2026-11-14.)
+
+The fund account: a classic Stellar account, no contract code, shares
+no keys with the pool admin.  2-of-3 signers at least.  Holds USDC only.
+
+
+Operator key compromise is not a covered event (DECISION 2026-11-18).
+The pool admin will be a pool-status-manager contract (owner = FUND,
+operator = the hot cron key; BLNT-Protocol/pool-status-admin, manager/).
+A stolen operator key can only change pool status: a freeze blocks no
+withdrawal, repay or liquidation, and an out-of-hours or uncovered
+opening is still bounded by the supply caps, which keep deposits under
+the cover limit.  Remedy: FUND calls set_operator with a new key.  Holds
+only once the manager is admin; go live after that, not with xbull.
+
+pool-status-manager wasm: sha256:db025cf4badff632cae84c30328b3671057179895537ad94973c41038eb8b86a
+https://github.com/BLNT-Protocol/pool-status-admin/attestations/69864498
+Operator public key: GAF6YOV7NXCTGR6U2CKZURLD5I7EB4AL5HLVYI3E3VR3C5A2FAY7LT43
+
+Decided 2026-11-18:
+    * fund signers: the existing 2-of-3 (GC4CBL...ZBRV, GDA5JJ...YOB,
+      GDMCUW...7VTK); any 2 sign
+    * claim review window: 5 business days
+    * cron host: a dedicated non-login system user that
+      holds only the operator key
+
+Open decisions
+--------------
+    * how a compromise of the fund multisig itself is treated (it holds
+      the reserve and every owner power of the pool manager)
+
+
+1. Deploy
+---------
+
+Same factory, backstop and oracle as YieldBlent (../pool-deploy.txt):
+
+    ORACLE=CDN7JD6SP32RZHB3DHK4S4AWCCQF6GYIUO455UCR4RGRZILZDRD24N36
+        (already prices XLM, USTRY, USDC; checked 2026-11-12:
+         XLM 0.1485770, USTRY 1.0781772, USDC 1.0)
+
+    SALT=$(xxd -l32 -c 32 -ps /dev/random)
+    inv $FACTORY -- deploy \
+        --admin $U \
+        --name "Blent Covered" \
+            (NOT "... Pool": the UI appends " Pool" to every name)
+        --salt $SALT \
+        --oracle $ORACLE \
+        --backstop_take_rate 5000000 \
+        --max_positions 4 \
+        --min_collateral 50000000 \
+        --backstop_config '[{"asset":"Usdc","take_rate_weight":1}]' \
+        --access_controller $CONTROLLER
+
+    backstop: one plain USDC FirstLoss tier (the mockup's $10 USDC
+        backstop, 50% take rate).  Usdc tiers earn no BLNT emissions, so
+        this pool skips step 3 (emissions) of pool-deploy.txt.
+        IMMUTABLE: a BLNT LP tier later means a new pool.
+    max_positions 4: three reserves + one spare.
+
+    POOL=CCH3BNZWTTBB2AKX6NT5OGKQSWP4UNBIKRTRMRDKKJLPMFKULHQZC3XD
+        (new fixed salt d22c7030...; simulated 2026-11-17 with name
+         "Blent Covered".)  DEPLOYED 2026-11-17, tx 537162f8...; read
+        back: is_pool true, name "Blent Covered", backstop = controller +
+        one Usdc tier, take rate 50%, status 6, admin xbull.
+
+    Abandoned pool: CDL3VILEP75UJCR5DK4BFLOUYSRFRHYRFSEWRGKDV366UH4QOCFA2GNN
+        deployed 2026-11-17 (tx 6551e6c0...) with reserves XLM/USTRY/USDC
+        (logs *.abandoned-CDL3.log), but named "Blent Covered Pool", so
+        the UI shows "Blent Covered Pool Pool".  The pool name is set
+        once at deploy and has no setter.  Left in status 6 (setup), no
+        deposits, no backstop; nothing points at it.  Same controller
+        (it ignores the pool argument), so the fund allowlist carries
+        over to the new pool.
+
+
+2. Reserves (in setup, no timelock)
+-----------------------------------
+
+Rates copied from YieldBlent; factors and caps differ.  Index
+order matters.
+
+Starting caps for a 90 USDC fund (limit $100), at 2026-11-12 prices:
+
+    asset  cap (tokens)  ~value   notes
+    XLM    150           $22.3    ~$29 if XLM rises 30%
+    USTRY   25           $27.0    T-bill RWA, c = l = 0.80
+    USDC    40           $40.0
+                         -----
+                         $89.3    ($96 with XLM +30%)
+
+  XLM    CAS3J7GYLGXMF6TDJBBYYSE3HQ6BBSMLNUQ34T6TZMYMW2EVH34XOWMA
+    {"index":0,"decimals":7,"c_factor":7000000,"l_factor":7000000,"util":5000000,"max_util":7000000,"r_base":100000,"r_one":400000,"r_two":3000000,"r_three":50000000,"reactivity":20,"supply_cap":"1500000000","enabled":true}
+  USTRY  CBLV4ATSIWU67CFSQU2NVRKINQIKUZ2ODSZBUJTJ43VJVRSBTZYOPNUR
+    {"index":1,"decimals":7,"c_factor":8000000,"l_factor":8000000,"util":5000000,"max_util":8000000,"r_base":100000,"r_one":200000,"r_two":1000000,"r_three":50000000,"reactivity":20,"supply_cap":"250000000","enabled":true}
+  USDC   CCW67TSZV3SSS2HXMBQ5JFGCKJNXKZM7UQUWUZPUTHXSTZLEO7SJMI75
+    {"index":2,"decimals":7,"c_factor":9500000,"l_factor":9500000,"util":8000000,"max_util":9500000,"r_base":300000,"r_one":400000,"r_two":1200000,"r_three":50000000,"reactivity":20,"supply_cap":"400000000","enabled":true}
+
+    inv $POOL -- queue_set_reserve --asset $ASSET --metadata '<json>'
+    inv $POOL -- set_reserve --asset $ASSET
+
+
+3. Fund account
+---------------
+
+    * create the classic account, add USDC trustline, fund 100 USDC
+      (90 reserve + 10 for the backstop deposit in step 4)
+    * add the two co-signers (weight 1 each), master weight 1,
+      thresholds low/med/high = 2  (2 of 3 for any payment)
+    * check it holds no other signers and no data entries
+    * record the G... address here and on the site:
+        FUND=GDA5JJFUAGFBNT4BMEGASY7EWBJFOWL2VBXMYY6QKCEOZMXHX6BBXYOB
+        (2-of-3 checked on Horizon 2026-11-14; signers GC4CBL...ZBRV,
+         GDA5JJ...YOB, GDMCUW...7VTK)
+
+
+4. Backstop deposit
+-------------------
+
+First allowlist the fund (step 3a):
+
+    ./add-depositor-covered.sh $FUND     -> paste into refractor.space
+
+Then the fund deposits, as the transaction source (2 signatures, via
+Refractor):
+
+    inv $BACKSTOP -- deposit --tier FirstLoss --from $FUND --pool $POOL \
+        --amount 100000000          # 10 USDC
+
+This 10 USDC leaves the fund account, so after it the fund must still
+hold >= 90 USDC of reserve.
+
+
+5. Go live
+----------
+
+Before leaving setup: site published with the real addresses, cover
+terms published, fund funded, cover-hours.sh configured (POOL, FUND)
+and `cover-hours.sh check` passing.
+
+Then leave setup straight into Admin Frozen, and let cron open it:
+
+    inv $POOL -- set_status --pool_status 4
+    crontab:  */5 * * * * /path/to/pool/cover-hours.sh tick
+
+(Leaving setup starts the 7-day timelock on reserve changes.)
+
+
+Weekly cap revision
+-------------------
+
+The pool admin is the pool-status-manager, owned by FUND, so a cap change
+is a fund transaction signed in Refractor (2 of 3); applying it 7 days
+later is permissionless.  Script: revise-caps-covered.sh (2026-11-20).
+
+    ./revise-caps-covered.sh             report: fund, limit (fund / 0.9),
+                                         deposits, caps, prices, queued
+                                         changes, suggested caps
+    ./revise-caps-covered.sh build XLM=160 USTRY=27 USDC=43
+                                         one fund XDR per asset in xdr/,
+                                         consecutive sequence numbers:
+                                         submit IN ORDER, nothing else from
+                                         the fund in between
+    ./revise-caps-covered.sh apply       after 7 days: set_reserve each
+                                         unlocked change (from xbull)
+
+Rule: caps' total value with XLM +30% stays under the limit; build refuses
+otherwise (--force overrides).  Only supply_cap changes; the rest of the
+config is sent as it is (changing the interest curve resets ir_mod).  One
+queued change per asset: a second fails until the first is applied or
+cancelled (manager cancel_set_reserve, a fund XDR; not scripted).  Caps
+only need changing when the fund's balance changes (sweep or top-up).  If
+the fund will SHRINK, lower the caps first and keep the pool frozen until
+the new caps apply and deposits are under the limit.
+
+
+Take-rate sweep
+---------------
+
+The backstop's take-rate earnings grow the fund's backstop position, not
+the fund account.  To move them into the reserve, periodically (e.g.
+monthly, before a weekly cap revision):
+
+    * read the fund's backstop position value vs. its principal
+    * queue_withdrawal of the earned part only (FUND source, Refractor)
+    * after the queue period, withdraw to FUND (Refractor again)
+    * the new FUND balance counts from the next opening check and cap
+      revision
+
+Keep the principal in place so the backstop stays funded.
+(TODO: script for building the sweep XDRs.)
+
+
+Daily operation: cover-hours.sh
+-------------------------------
+
+    cover-hours.sh check     print deposits, fund, required; exit 0 if covered
+    cover-hours.sh tick      cron entry (every 5 min): freeze outside
+                             hours; at/after open, run check and open only
+                             if covered
+    cover-hours.sh hold      incident: freeze now and stop tick reopening
+    cover-hours.sh release   remove the hold (tick reopens next business
+                             interval if covered)
+
+tick prints only when it acts or something is wrong, so cron's mail is
+the alert.  A failed opening check is reported once per day.
+
+
+LOGS
+----
+
+These are the scripts and logs used for deployment:
+
+    accept-admin-covered.sh
+    add-depositor-covered.sh
+    add-trustline-covered.sh
+    cover-holidays.txt
+    cover-hours.sh
+    cover-reserve.txt
+    deploy-manager-covered.sh
+    deploy-manager-covered.sh.log
+    deploy-pool-covered.sh
+    deploy-pool-covered.sh.log
+    deposit-backstop-covered.sh
+    go-live-covered.sh
+    propose-admin-covered.sh
+    propose-admin-covered.sh.log
+    set-admin-yieldblent.sh
+    set-depositor-covered.sh
+    set-reserves-covered.sh
+    set-reserves-covered.sh.log
+
+
