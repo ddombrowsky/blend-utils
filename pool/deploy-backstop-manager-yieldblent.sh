@@ -5,6 +5,9 @@
 #   owner:   xbull   (owns the funds; can do everything, incl. set_manager,
 #                     set_harvest_bps, transfer_token)
 #   manager: claudio, scope 0 = Low (b_claim, harvest)
+#   harvest: 10000 bps (manager's share of earnings).  Not a constructor
+#            argument -- the contract starts at 0, so step 3 sets it with
+#            a separate owner call to set_harvest_bps.
 #
 # The salt is fixed, so the address is known in advance and a second run
 # can't create a second instance.  Asks before sending, then reads it back.
@@ -20,6 +23,7 @@ SOURCE=xbull                     # signs, pays fees, becomes owner
 OWNER=$(stellar keys address $SOURCE)
 MANAGER=$(stellar keys address claudio)
 SCOPE=0                          # 0 Low, 1 Medium, 2 High
+HARVEST_BPS=10000                # manager's share of earnings, 0..10000
 
 # Release v1.0.1 (tag commit 5c47084), StellarExpert attested build;
 # already installed on mainnet.
@@ -41,6 +45,7 @@ echo "manager  $MANAGER (claudio), scope $SCOPE"
 echo "wasm     $WASM_HASH"
 echo "backstop $BACKSTOP"
 echo "pool     $POOL"
+echo "harvest  $HARVEST_BPS bps (basis points, manager's share of earnings; 10000 = 100%)"
 ID=$(stellar contract id wasm --salt $SALT --source-account $SOURCE --network mainnet)
 echo "address  $ID"
 if [ "$ID" != "$EXPECTED" ]; then
@@ -64,7 +69,22 @@ else
         --pools "[\"$POOL\"]"
 fi
 
-echo "== 3. verify"
+echo "== 3. harvest_bps"
+CUR_BPS=$(view harvest_bps)
+if [ "$CUR_BPS" = "$HARVEST_BPS" ]; then
+    echo "already $HARVEST_BPS"
+else
+    echo "current $CUR_BPS, want $HARVEST_BPS"
+    read -p "Set harvest_bps to $HARVEST_BPS? [y/N] " ok
+    if [ "$ok" = y ]; then
+        stellar contract invoke --source-account $SOURCE --network mainnet \
+            --id "$ID" -- set_harvest_bps --bps $HARVEST_BPS
+    else
+        echo "skipped; harvest_bps left at $CUR_BPS"
+    fi
+fi
+
+echo "== 4. verify"
 echo "owner:       $(view owner)"
 echo "manager:     $(view manager)"
 echo "backstops:   $(view backstops)"
