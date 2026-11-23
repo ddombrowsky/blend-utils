@@ -1,6 +1,9 @@
 #!/bin/bash
 set -e
 
+. "$(dirname "$0")/comet-errors.sh"
+POOL=CDQMIKIHKA5UY3FQJ2UDTLNX3GOPD3GPNZWSPTOBVOHEUMQJQXOPC7Y3
+
 # swap USDC -> BLNT in pool
 USDC_N=$1
 # price is in USDC
@@ -29,8 +32,8 @@ export SECRET_KEY=`stellar keys show xbull`
 
 TOKSTR=BLNT
 while [ $good = 1 ] ; do
-    stellar contract invoke \
-    --id CDQMIKIHKA5UY3FQJ2UDTLNX3GOPD3GPNZWSPTOBVOHEUMQJQXOPC7Y3 \
+    if ! stellar contract invoke \
+    --id $POOL \
     --source-account xbull \
     --network mainnet --inclusion-fee 10000000 -- \
     swap_exact_amount_in \
@@ -39,7 +42,13 @@ while [ $good = 1 ] ; do
     --token_out $BLNT_CONTRACT \
     --min_amount_out 1 \
     --max_price $PRICESTR \
-    --user xbull | tee out
+    --user xbull >out 2>err ; then
+        cat err >&2
+        explain_comet_error err $POOL $USDC_CONTRACT $BLNT_CONTRACT $PRICESTR
+        exit 1
+    fi
+    cat err >&2
+    cat out
 
     [ \! -s out ] && exit 1
 
