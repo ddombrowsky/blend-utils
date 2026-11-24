@@ -1,26 +1,26 @@
 # Reproduce a YieldBlent claim after the Comet market changes
 
-A claim that would receive **0.0506828 LP** receives **0.0501810 LP** after a
+A claim that would receive **0.0772044 LP** receives **0.0764400 LP** after a
 trade changes the BLNT:XLM Comet pool. The previous minimum rejects the claim
 without consuming the reward. A retry with a recalculated minimum succeeds.
 
 ## Results
 
-Saved mainnet ledger: **65,556,895**, **2026-11-19 06:41:58 UTC**. The existing
-YieldBlent FirstLoss position has **0.5834575 BLNT** of claimable rewards in both
+Saved mainnet ledger: **65,646,121**, **2026-11-24 10:37:37 UTC**. The existing
+YieldBlent FirstLoss position has **0.9118429 BLNT** of claimable rewards in both
 reference branches. All amounts below use seven decimals.
 
 | Operation | Minimum LP | Actual LP | Result |
 | --- | ---: | ---: | --- |
-| Baseline measurement | 0 | 0.0506828 | Output before the market move |
-| Post-trade measurement | 0 | 0.0501810 | Same reward amount, different output |
-| Claim with the previous 0.5% tolerance | 0.0504293 | N/A | Comet error 20; no ledger changes |
-| Retry with a new 0.5% tolerance | 0.0499300 | 0.0501810 | LP and owner/tier shares credited |
-| Another claim at the same ledger time | 0.0499300 | 0 | The reward was consumed once |
+| Baseline measurement | 0 | 0.0772044 | Output before the market move |
+| Post-trade measurement | 0 | 0.0764400 | Same reward amount, different output |
+| Claim with the previous 0.5% tolerance | 0.0768183 | N/A | Comet error 20; no ledger changes |
+| Retry with a new 0.5% tolerance | 0.0760578 | 0.0764400 | LP and owner/tier shares credited |
+| Another claim at the same ledger time | 0.0760578 | 0 | The reward was consumed once |
 
-The trade sells **53,104.8953513 BLNT**, one percent of the captured BLNT reserve,
-for **2,234.5125525 XLM**. The trade remains applied after the rejected claim. The
-retry credits **0.0501810 shares** to the same owner and tier; the other tier's user
+The trade sells **60,248.9893735 BLNT**, one percent of the captured BLNT reserve,
+for **2,232.1157249 XLM**. The trade remains applied after the rejected claim. The
+retry credits **0.0764400 shares** to the same owner and tier; the other tier's user
 balance is unchanged. Accepting the lower minimum does not restore the original
 economic value.
 
@@ -31,9 +31,9 @@ See the [market-move assertions](tests/claim.rs#L331),
 The test prints these raw amounts:
 
 ```text
-reward=5834575 baseline_lp=506828 old_min=504293 changed_lp=501810
-new_min=499300 retry_lp=501810 added_shares=501810
-reserve_blnt=53104895351392 sold_blnt=531048953513 received_xlm=22345125525
+reward=9118429 baseline_lp=772044 old_min=768183 changed_lp=764400
+new_min=760578 retry_lp=764400 added_shares=764400
+reserve_blnt=60248989373539 sold_blnt=602489893735 received_xlm=22321157249
 rejection=Contract(20); unchanged_ledger=true; upstream_reads=0
 ```
 
@@ -53,7 +53,7 @@ The reproduced refusal is expected behavior.
   the parent fork discards the failed operation.
 - Retry assertions cover exact BLNT debit, Comet reserve increase, LP custody,
   share conversion, the same owner/tier, and a zero subsequent claim.
-- The saved fixture contains 27 present and nine confirmed absent entries.
+- The saved fixture contains 27 present and 9 confirmed absent entries.
   Uncaptured dependencies fail closed; there is no network fallback during replay.
 
 Owner authorization is mocked locally. A separate synthetic contract address
@@ -77,7 +77,7 @@ cargo +1.95.0 fetch --locked
 cargo +1.95.0 test --locked --offline -- --nocapture
 ```
 
-The first command downloads dependencies, including **Kanatoko 29.1.2 from
+The first command downloads dependencies, including **Kanatoko 30.0.0 from
 crates.io**. The default test loads the saved fixture; the RPC capture test is
 ignored. This package has its own lockfile and workspace, separate from the
 covered controller and BLNT's production build.
@@ -97,9 +97,7 @@ BLNT_NEW_CAPTURE=/tmp/blnt-claim-new.json \
   capture_current_claim_and_market_dependencies -- --ignored --nocapture
 ```
 
-The same recipe passed at ledger **65,556,945** without changing the source or
-manually preparing state. Rewards had increased to **0.5836374 BLNT**; baseline
-output was **0.0506985 LP** and post-trade/retry output was **0.0501965 LP**.
+This recipe produced the saved Protocol 30 capture at ledger **65,646,121**.
 
 A new capture fails if rewards are no longer claimable, the market move no longer
 crosses the specified tolerance, deployed code hashes change, or the network
@@ -108,8 +106,8 @@ or skip those conditions.
 
 ## Provenance
 
-Network and execution protocol: **29**. Saved ledger hash:
-`7051b62652cc0e33fdc3ddf60f36dc599749df761800883ad820a17ca0710db4`.
+Network and execution protocol: **30**. Saved ledger hash:
+`9ccb598b6baeb5673c98f914d184ebdb30f51b5ed867591fb24e397e4ecd5d63`.
 Source RPC: `https://mainnet.sorobanrpc.com`.
 
 The [test validates contract instance hashes and captured WASM bytes](tests/claim.rs#L244)

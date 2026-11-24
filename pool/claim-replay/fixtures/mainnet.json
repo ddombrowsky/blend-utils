@@ -1,9 +1,9 @@
 {
   "schema_version": 2,
   "ledger_snapshot": {
-    "protocol_version": 29,
-    "sequence_number": 65556895,
-    "timestamp": 1795070518,
+    "protocol_version": 30,
+    "sequence_number": 65646121,
+    "timestamp": 1795516657,
     "network_id": "7ac33997544e3175d266bd022439b22cdb16508c01163f26e5cb2a3e1045a979",
     "base_reserve": 5000000,
     "min_persistent_entry_ttl": 2073600,
@@ -54,13 +54,13 @@
       },
       {
         "entry": {
-          "last_modified_ledger_seq": 65555032,
+          "last_modified_ledger_seq": 65640827,
           "data": {
             "account": {
               "account_id": "GDJSH2NU2WF6J4P5DL4522DUCABWSTZOKFQ7BHBCFYQ3QKC6FRYWP6OL",
-              "balance": "792754411",
-              "seq_num": "216775804112107455",
-              "num_sub_entries": 18,
+              "balance": "399061415",
+              "seq_num": "216775804112107635",
+              "num_sub_entries": 16,
               "inflation_dest": null,
               "flags": 0,
               "home_domain": "",
@@ -80,8 +80,8 @@
                       "ext": {
                         "v3": {
                           "ext": "v0",
-                          "seq_ledger": 65555032,
-                          "seq_time": "1795061203"
+                          "seq_ledger": 65636303,
+                          "seq_time": "1795467563"
                         }
                       }
                     }
@@ -96,7 +96,7 @@
       },
       {
         "entry": {
-          "last_modified_ledger_seq": 65554165,
+          "last_modified_ledger_seq": 65639990,
           "data": {
             "contract_data": {
               "ext": "v0",
@@ -140,7 +140,7 @@
                       "symbol": "eps"
                     },
                     "val": {
-                      "u64": "3348842969006"
+                      "u64": "3842312170101"
                     }
                   },
                   {
@@ -148,7 +148,7 @@
                       "symbol": "expiration"
                     },
                     "val": {
-                      "u64": "1795640423"
+                      "u64": "1796079853"
                     }
                   },
                   {
@@ -156,7 +156,7 @@
                       "symbol": "index"
                     },
                     "val": {
-                      "i128": "57363789594770"
+                      "i128": "88924390072027"
                     }
                   },
                   {
@@ -164,7 +164,7 @@
                       "symbol": "index_carry"
                     },
                     "val": {
-                      "i128": "117048064185"
+                      "i128": "237020242939"
                     }
                   },
                   {
@@ -172,7 +172,7 @@
                       "symbol": "last_time"
                     },
                     "val": {
-                      "u64": "1795056868"
+                      "u64": "1795485999"
                     }
                   },
                   {
@@ -180,7 +180,7 @@
                       "symbol": "schedule_carry"
                     },
                     "val": {
-                      "i128": "449600"
+                      "i128": "258486"
                     }
                   }
                 ]
@@ -193,7 +193,7 @@
       },
       {
         "entry": {
-          "last_modified_ledger_seq": 65554165,
+          "last_modified_ledger_seq": 65639990,
           "data": {
             "contract_data": {
               "ext": "v0",
@@ -224,7 +224,7 @@
                       "symbol": "shares"
                     },
                     "val": {
-                      "i128": "329112773992"
+                      "i128": "367757703061"
                     }
                   },
                   {
@@ -232,7 +232,7 @@
                       "symbol": "tokens"
                     },
                     "val": {
-                      "i128": "329112773992"
+                      "i128": "367757703061"
                     }
                   }
                 ]
@@ -306,7 +306,7 @@
       },
       {
         "entry": {
-          "last_modified_ledger_seq": 65554165,
+          "last_modified_ledger_seq": 65639990,
           "data": {
             "contract_data": {
               "ext": "v0",
@@ -350,7 +350,7 @@
                       "symbol": "q4w"
                     },
                     "val": {
-                      "i128": "2187593832"
+                      "i128": "4320842369"
                     }
                   },
                   {
@@ -358,7 +358,7 @@
                       "symbol": "shares"
                     },
                     "val": {
-                      "i128": "467699125126"
+                      "i128": "525571119645"
                     }
                   },
                   {
@@ -366,7 +366,7 @@
                       "symbol": "tokens"
                     },
                     "val": {
-                      "i128": "467699125126"
+                      "i128": "525571119645"
                     }
                   }
                 ]
@@ -524,11 +524,11 @@
           },
           "ext": "v0"
         },
-        "live_until": 68660315
+        "live_until": 68748065
       },
       {
         "entry": {
-          "last_modified_ledger_seq": 65556612,
+          "last_modified_ledger_seq": 65645793,
           "data": {
             "contract_data": {
               "ext": "v0",
@@ -551,7 +551,7 @@
                       "symbol": "accrued_pool"
                     },
                     "val": {
-                      "i128": "10812561357"
+                      "i128": "12972840190"
                     }
                   },
                   {
@@ -559,7 +559,7 @@
                       "symbol": "active_blnt_usdc"
                     },
                     "val": {
-                      "i128": "328854529273"
+                      "i128": "367499458342"
                     }
                   },
                   {
@@ -567,7 +567,7 @@
                       "symbol": "active_blnt_xlm"
                     },
                     "val": {
-                      "i128": "465511531294"
+                      "i128": "521250277276"
                     }
                   },
                   {
@@ -583,7 +583,7 @@
                       "symbol": "pending_blnt_usdc"
                     },
                     "val": {
-                      "i128": "10685513120"
+                      "i128": "12889190564"
                     }
                   },
                   {
@@ -591,7 +591,7 @@
                       "symbol": "pending_blnt_xlm"
                     },
                     "val": {
-                      "i128": "14543796722"
+                      "i128": "17380769884"
                     }
                   }
                 ]
@@ -604,7 +604,7 @@
       },
       {
         "entry": {
-          "last_modified_ledger_seq": 65556858,
+          "last_modified_ledger_seq": 65645793,
           "data": {
             "contract_data": {
               "ext": "v0",
@@ -684,7 +684,7 @@
                               "symbol": "backstop_allocated"
                             },
                             "val": {
-                              "i128": "14787219999999"
+                              "i128": "17908617999999"
                             }
                           },
                           {
@@ -700,7 +700,7 @@
                               "symbol": "backstop_claimed"
                             },
                             "val": {
-                              "i128": "9936188931972"
+                              "i128": "12818720842197"
                             }
                           },
                           {
@@ -708,7 +708,7 @@
                               "symbol": "last_distribution"
                             },
                             "val": {
-                              "u64": "1795069103"
+                              "u64": "1795515017"
                             }
                           },
                           {
@@ -716,7 +716,7 @@
                               "symbol": "pool_allocated"
                             },
                             "val": {
-                              "i128": "6337379999999"
+                              "i128": "7675121999999"
                             }
                           },
                           {
@@ -740,7 +740,7 @@
                               "symbol": "total_distributed"
                             },
                             "val": {
-                              "i128": "21124600000000"
+                              "i128": "25583740000000"
                             }
                           }
                         ]
@@ -813,7 +813,7 @@
       },
       {
         "entry": {
-          "last_modified_ledger_seq": 65555511,
+          "last_modified_ledger_seq": 65646116,
           "data": {
             "contract_data": {
               "ext": "v0",
@@ -836,7 +836,7 @@
                       "symbol": "amount"
                     },
                     "val": {
-                      "i128": "574344041134"
+                      "i128": "573727976718"
                     }
                   },
                   {
@@ -932,11 +932,11 @@
           },
           "ext": "v0"
         },
-        "live_until": 68638104
+        "live_until": 68745049
       },
       {
         "entry": {
-          "last_modified_ledger_seq": 65556851,
+          "last_modified_ledger_seq": 65643625,
           "data": {
             "contract_data": {
               "ext": "v0",
@@ -950,7 +950,7 @@
               },
               "durability": "persistent",
               "val": {
-                "i128": "5769754230009"
+                "i128": "6380326712507"
               }
             }
           },
@@ -960,7 +960,7 @@
       },
       {
         "entry": {
-          "last_modified_ledger_seq": 65556851,
+          "last_modified_ledger_seq": 65646116,
           "data": {
             "contract_data": {
               "ext": "v0",
@@ -986,7 +986,7 @@
                             "symbol": "balance"
                           },
                           "val": {
-                            "i128": "574344041134"
+                            "i128": "573727976718"
                           }
                         },
                         {
@@ -1027,7 +1027,7 @@
                             "symbol": "balance"
                           },
                           "val": {
-                            "i128": "53104895351392"
+                            "i128": "60248989373539"
                           }
                         },
                         {
@@ -1067,7 +1067,7 @@
       },
       {
         "entry": {
-          "last_modified_ledger_seq": 65556851,
+          "last_modified_ledger_seq": 65643629,
           "data": {
             "contract_data": {
               "ext": "v0",
@@ -1084,7 +1084,7 @@
               },
               "durability": "persistent",
               "val": {
-                "i128": "5756142489353"
+                "i128": "6370350440795"
               }
             }
           },
@@ -1175,7 +1175,7 @@
       },
       {
         "entry": {
-          "last_modified_ledger_seq": 65556858,
+          "last_modified_ledger_seq": 65645793,
           "data": {
             "contract_data": {
               "ext": "v0",
@@ -1198,7 +1198,7 @@
                       "symbol": "amount"
                     },
                     "val": {
-                      "i128": "7143049703462"
+                      "i128": "7516243928220"
                     }
                   },
                   {
@@ -1227,7 +1227,7 @@
       },
       {
         "entry": {
-          "last_modified_ledger_seq": 65556851,
+          "last_modified_ledger_seq": 65646116,
           "data": {
             "contract_data": {
               "ext": "v0",
@@ -1250,7 +1250,7 @@
                       "symbol": "amount"
                     },
                     "val": {
-                      "i128": "53104895351392"
+                      "i128": "60248989373539"
                     }
                   },
                   {
@@ -1279,7 +1279,7 @@
       },
       {
         "entry": {
-          "last_modified_ledger_seq": 65556851,
+          "last_modified_ledger_seq": 65643625,
           "data": {
             "contract_data": {
               "ext": "v0",
@@ -1327,7 +1327,7 @@
                       "symbol": "live_until_ledger"
                     },
                     "val": {
-                      "u32": 65600000
+                      "u32": 65700000
                     }
                   }
                 ]
@@ -1336,7 +1336,7 @@
           },
           "ext": "v0"
         },
-        "live_until": 65600000
+        "live_until": 65700000
       },
       {
         "entry": {
@@ -1443,7 +1443,7 @@
       },
       {
         "entry": {
-          "last_modified_ledger_seq": 65556858,
+          "last_modified_ledger_seq": 65643628,
           "data": {
             "contract_data": {
               "ext": "v0",
@@ -1457,7 +1457,7 @@
               },
               "durability": "persistent",
               "val": {
-                "i128": "2073871261801"
+                "i128": "2495170756578"
               }
             }
           },
@@ -1467,7 +1467,7 @@
       },
       {
         "entry": {
-          "last_modified_ledger_seq": 65556858,
+          "last_modified_ledger_seq": 65646116,
           "data": {
             "contract_data": {
               "ext": "v0",
@@ -1493,7 +1493,7 @@
                             "symbol": "balance"
                           },
                           "val": {
-                            "i128": "19887074293471"
+                            "i128": "24863696412704"
                           }
                         },
                         {
@@ -1534,7 +1534,7 @@
                             "symbol": "balance"
                           },
                           "val": {
-                            "i128": "29349704105"
+                            "i128": "30347174174"
                           }
                         },
                         {
@@ -1832,11 +1832,11 @@
   "provenance": {
     "rpc_origin": "https://mainnet.sorobanrpc.com",
     "network_passphrase": "Public Global Stellar Network ; September 2015",
-    "ledger_sequence": 65556895,
-    "ledger_hash": "7051b62652cc0e33fdc3ddf60f36dc599749df761800883ad820a17ca0710db4",
-    "protocol_version": 29
+    "ledger_sequence": 65646121,
+    "ledger_hash": "9ccb598b6baeb5673c98f914d184ebdb30f51b5ed867591fb24e397e4ecd5d63",
+    "protocol_version": 30
   },
-  "ledger_digest": "4e43f32584a309711f375f31777e538c3cb9fb8d6a98e8962d5c4797c575be7e",
-  "inventory_digest": "9d82dbec2a1ed697701d6762c1e1a2c2a4fa175f85019b439c9b82683b0c1380",
-  "canonical_digest": "926a593b32e329754751a4a78ab338cf8f68657dafeb944e95002c262ad20f04"
+  "ledger_digest": "a9dc53f7853e10ed28213a3c7a92ed6c35457501e6f494c7e1b6eb694fc8b765",
+  "inventory_digest": "f51068e9622cf5283cd0575a04882c0d3ef269bcb95f44fc32ef2dcaee0422e0",
+  "canonical_digest": "da6ffac2926059914ea26373eb49eb46485bf7b5ef243d0b6cbc463d79b9b327"
 }

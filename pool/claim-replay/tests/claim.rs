@@ -313,8 +313,8 @@ fn check_deployed_code(captured: &CapturedFixture) {
 
 fn check(captured: &CapturedFixture) {
     check_deployed_code(captured);
-    assert_eq!(captured.provenance().protocol_version(), 29);
-    assert_eq!(captured.provenance().executed_protocol_version(), 29);
+    assert_eq!(captured.provenance().protocol_version(), 30);
+    assert_eq!(captured.provenance().executed_protocol_version(), 30);
     assert_eq!(captured.report().final_replay_rpc_reads(), 0);
     let mut baseline = captured.fork();
     let initial = position(&mut baseline);
@@ -437,7 +437,7 @@ fn check(captured: &CapturedFixture) {
     assert_eq!(position(&mut changed), after);
     assert_eq!(changed.upstream_reads(), 0);
     println!(
-        "ledger={} hash={} protocol=29 present={} absent={}",
+        "ledger={} hash={} protocol=30 present={} absent={}",
         captured.provenance().ledger_sequence(),
         captured.provenance().ledger_hash(),
         captured.report().present_entries(),
