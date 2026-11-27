@@ -77,7 +77,7 @@ cargo +1.95.0 fetch --locked
 cargo +1.95.0 test --locked --offline -- --nocapture
 ```
 
-The first command downloads dependencies, including **Kanatoko 30.0.0 from
+The first command downloads dependencies, including **Kanatoko 30.1.0 from
 crates.io**. The default test loads the saved fixture; the RPC capture test is
 ignored. This package has its own lockfile and workspace, separate from the
 covered controller and BLNT's production build.
